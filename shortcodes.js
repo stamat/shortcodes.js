@@ -1,9 +1,11 @@
-/** shortcodes.js v1.0.0 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+/** shortcodes.js v1.0.1 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+
+
+//TODO: decide if jQuery is really necessary
 
 function Shortcodes() {
 	this.descriptor_index = {};
 	this.exec_fns = {};
-
 
 	//Object deep clone from d0.js @stamat
 	if (!window.hasOwnProperty('d0')) {
@@ -140,16 +142,11 @@ Shortcodes.prototype.parseDOM = function($elem, one) {
 };
 
 //if this isn't a God function I don't know what is... Wait, I know, it's a terrible nonrefactored code!
-Shortcodes.prototype.bind = function(descriptor, val) {
-	var $template = null;
+Shortcodes.prototype.sortDOM = function(descriptor, val) {
+	var re = /^\{([a-z0-9\-_\s]+)\}$/gi; //subtag attributes
 
-	if (descriptor.hasOwnProperty('template')) {
-		$template = this.getTemplate(descriptor.template);
-	}
-
-	var item_tags = [];
-	var item_tag = null;
-	var elements = {};
+	var item_tags = []; //collects attributes per "slide"
+	var elements = {}; //sorted DOM per tag name
 	var other_than_rest = {};
 	var other_than_rest_count = 0;
 	var first_element_key = null;
@@ -193,187 +190,201 @@ Shortcodes.prototype.bind = function(descriptor, val) {
 	//rest has to be always present, it is a default nondefined element
 	elements.rest = [];
 
-	function resultCollector() {
-		var re = /^\{([a-z0-9\-_\s]+)\}$/gi; //repetitive arguments
+	for (var i = 0; i < val.length; i++) {
+		var $item = $(val[i]);
 
-		for (var i = 0; i < val.length; i++) {
-			var $item = $(val[i]);
+		if ($item.hasClass('self-anchor')) {
+			// find yourself in this confusion
+			if (descriptor.anchor === 'self') {
+				descriptor.anchor = $item;
+			}
+			continue;
+		}
 
-			if ($item.hasClass('self-anchor')) {
-				// find yourself in this confusion
-				if (descriptor.anchor === 'self') {
-					descriptor.anchor = $item;
+		//if the contents are empty
+		if (!$item.is('img') && $item.html().trim() === '') {
+			continue;
+		}
+
+		var green_flag = false;
+
+		//testing for slide attributes
+		if (descriptor.hasOwnProperty('item_template')) {
+			var text = $item.text().toLowerCase().trim();
+			var match = re.exec(text);
+			re.lastIndex = 0;
+
+			if (match && match.length > 1) {
+				green_flag = true;
+				newCycle();
+
+				item_tags[cycle_counter] = match[1];
+			}
+		}
+
+		if (other_than_rest_count && !green_flag) {
+			for (var k in other_than_rest) {
+
+				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count
+					continue;
 				}
-				continue;
-			}
 
-			//if the contents are empty
-			if (!$item.is('img') && $item.html().trim() === '') {
-				continue;
-			}
+				//XXX: this is a temporary and very bad solution
+				if (k === 'img' && $item.find('li').length) {
+					continue;
+				}
 
-			var green_flag = false;
+				var $inner = $item.find(k); //gotta cover all the possible cases of undefined generated html
 
-			//testing for slide attributes
-			if (descriptor.hasOwnProperty('item_template')) {
-				var text = $item.text().toLowerCase().trim();
-				var match = re.exec(text);
+				if ($item.is(k) || $inner.length) {
+					if ($inner.length) {
+						$item = $inner.first();
+					}
 
-				if (match && match.length > 1) {
-					item_tag = match[1];
-
+					elements[k].push($item);
 					green_flag = true;
-					newCycle();
-
-					item_tags[cycle_counter] = item_tag;
-				}
-			}
-
-			if (other_than_rest_count && !green_flag) {
-				for (var k in other_than_rest) {
-
-					if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count
-						continue;
-					}
-
-					//XXX: this is a temporary and very bad solution
-					if (k === 'img' && $item.find('li').length) {
-						continue;
-					}
-
-					var $inner = $item.find(k); //gotta cover all the possible cases of undefined generated html
-
-					if ($item.is(k) || $inner.length) {
-						if ($inner.length) {
-							$item = $inner.first();
+					//use interupts only if it is a repeater element, otherwise store all
+					if (descriptor.hasOwnProperty('item_template')) {
+						if (k === last_element_key) {
+							resetCycle();
+						} else {
+							newCycle();
 						}
-
-						elements[k].push($item);
-						green_flag = true;
-						//use interupts only if it is a repeater element, otherwise store all
-						if (descriptor.hasOwnProperty('item_template')) {
-							if (k === last_element_key) {
-								resetCycle();
-							} else {
-								newCycle();
-							}
-						}
-						break;
 					}
-				}
-			}
-
-			if (!green_flag) {
-				//collecting other elements
-				if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
-					resetCycle();
-
-					if (!elements.rest[cycle_counter]) {
-						elements.rest[cycle_counter] = [];
-					}
-					elements.rest[cycle_counter].push($item[0]);
-
-				} else {
-					elements.rest.push($item[0]);
+					break;
 				}
 			}
 		}
-	}
-	resultCollector();
 
-	function resultParser($item, $dest, props) {
-		if (props.extract_fn === 'attr') {
-			if (typeof props.extract_attr === 'string') {
-				extract = $item[props.extract_fn](props.extract_attr);
-			} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
-				extract = [];
-				for (var i = 0; i < props.extract_attr.length; i++) {
-					if (props.extract_attr[i] === 'html') {
-						extract.push($item.html());
-						continue;
-					}
-					var attr = props.extract_attr[i];
-					extract.push($item[props.extract_fn](attr));
+		if (!green_flag) {
+			//collecting other elements
+			if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
+				resetCycle();
+
+				if (!elements.rest[cycle_counter]) {
+					elements.rest[cycle_counter] = [];
 				}
-			}
-		} else if (props.extract_fn === 'self') {
-			extract = $item;
-		} else {
-			extract = $item[props.extract_fn]();
-		}
+				elements.rest[cycle_counter].push($item[0]);
 
-		//TODO: should be extract_fn typeof function
-		if (props.hasOwnProperty('parse')) {
-			if (typeof props.parse === 'function') {
-				extract = props.parse(extract);  //execute custom extract parsing function
 			} else {
-				if (window.hasOwnProperty(props.parse)) {
-					extract = window[props.parse](extract);
-				}
+				elements.rest.push($item[0]);
 			}
 		}
+	}
 
-		if (props.bind_fn === 'css'
-			&& props.hasOwnProperty('bind_property')
-			&& props.bind_property === 'background-image') {
-			extract  = 'url(' + extract + ')';
-		} else if (typeof props.bind_fn === 'function') {
-			props.bind_fn(extract, $dest, props, descriptor); //execute custom bind function
-			return;
+	return {	elements: elements,
+				item_tags: item_tags,
+				first_element_key: first_element_key,
+				last_element_key: last_element_key
+	};
+}
+
+//TODO: simplify with declarative programming
+Shortcodes.prototype.executeProperties = function($item, $dest, props, descriptor) {
+	// Extract DOM attributes
+	if (props.extract_fn === 'attr') {
+		if (typeof props.extract_attr === 'string') {
+			extract = $item[props.extract_fn](props.extract_attr);
+		} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
+			extract = [];
+			for (var i = 0; i < props.extract_attr.length; i++) {
+				if (props.extract_attr[i] === 'html') {
+					extract.push($item.html());
+					continue;
+				}
+				var attr = props.extract_attr[i];
+				extract.push($item[props.extract_fn](attr));
+			}
 		}
+	// Extract DOM
+	} else if (props.extract_fn === 'self') {
+		extract = $item;
+	// Extract with jQuery function
+	} else {
+		extract = $item[props.extract_fn]();
+	}
 
-		//do some auto binding
-		switch (props.anchor_element) {
-			case 'item':
-				$target = $dest.find(props.anchor);
-				if ($dest.is(props.anchor) && $target.length === 0) {
-					$target = $dest;
-				}
-
-				if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-					$target[props.bind_fn](props.bind_property, extract);
-				} else {
-					$target[props.bind_fn](extract);
-				}
-				break;
-			case 'template':
-				$target = $dest.find(props.anchor);
-				if ($dest.is(props.anchor) && $target.length === 0) {
-					$target = $dest;
-				}
-
-				if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-					$target[props.bind_fn](props.bind_property, extract);
-				} else {
-					$target[props.bind_fn](extract);
-				}
-				break;
-			default:
-				$target = $(descriptor.anchor).find(props.anchor);
-				if ($(descriptor.anchor).is(props.anchor) && $target.length === 0) {
-					$target = $(descriptor.anchor);
-				}
-
-				if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-					$target[props.bind_fn](props.bind_property, extract);
-				} else {
-					$target[props.bind_fn](extract);
-				}
+	//TODO: should be extract_fn typeof function
+	if (props.hasOwnProperty('parse')) {
+		if (typeof props.parse === 'function') {
+			extract = props.parse(extract);  //execute custom extract parsing function
+		} else {
+			if (window.hasOwnProperty(props.parse)) {
+				extract = window[props.parse](extract);
+			}
 		}
 	}
+
+	if (props.bind_fn === 'css'
+		&& props.hasOwnProperty('bind_property')
+		&& props.bind_property === 'background-image') {
+		extract  = 'url(' + extract + ')';
+	} else if (typeof props.bind_fn === 'function') {
+		props.bind_fn(extract, $dest, props, descriptor); //execute custom bind function
+		return;
+	}
+
+	//do some auto binding
+	switch (props.anchor_element) {
+		case 'item':
+			$target = $dest.find(props.anchor);
+			if ($dest.is(props.anchor) && $target.length === 0) {
+				$target = $dest;
+			}
+
+			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
+				$target[props.bind_fn](props.bind_property, extract);
+			} else {
+				$target[props.bind_fn](extract);
+			}
+			break;
+		case 'template':
+			$target = $dest.find(props.anchor);
+			if ($dest.is(props.anchor) && $target.length === 0) {
+				$target = $dest;
+			}
+
+			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
+				$target[props.bind_fn](props.bind_property, extract);
+			} else {
+				$target[props.bind_fn](extract);
+			}
+			break;
+		default:
+			$target = $(descriptor.anchor).find(props.anchor);
+			if ($(descriptor.anchor).is(props.anchor) && $target.length === 0) {
+				$target = $(descriptor.anchor);
+			}
+
+			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
+				$target[props.bind_fn](props.bind_property, extract);
+			} else {
+				$target[props.bind_fn](extract);
+			}
+	}
+}
+
+Shortcodes.prototype.bind = function(descriptor, val) {
+	var $template = null;
+
+	if (descriptor.hasOwnProperty('template')) {
+		$template = this.getTemplate(descriptor.template);
+	}
+
+	var sorted = this.sortDOM(descriptor, val);
 
 	if (descriptor.hasOwnProperty('item_template')) {
-		for (var i = 0; i < elements[first_element_key].length; i++) {
+		for (var i = 0; i < sorted.elements[sorted.first_element_key].length; i++) {
 			var $item_template = this.getTemplate(descriptor.item_template);
-			if (item_tags[i]) {
-				$item_template.addClass(item_tags[i]);
+			if (sorted.item_tags[i]) {
+				$item_template.addClass(sorted.item_tags[i]);
 			}
 
 			for (var k in descriptor.elements) {
 				var props = descriptor.elements[k];
-				if (elements[k][i]) { //if the element exists, may be an uneven number
-					var $item = $(elements[k][i]);
-					resultParser($item, $item_template, props);
+				if (sorted.elements[k][i]) { //if the element exists, may be an uneven number
+					var $item = $(sorted.elements[k][i]);
+					this.executeProperties($item, $item_template, props, descriptor);
 				}
 			}
 
@@ -385,20 +396,20 @@ Shortcodes.prototype.bind = function(descriptor, val) {
 			for (var k in descriptor.elements) {
 				var props = descriptor.elements[k];
 
-				if (elements.hasOwnProperty(k)) {
-					for (var i = 0; i < elements[k].length; i++) {
-						var $item = $(elements[k][i]);
+				if (sorted.elements.hasOwnProperty(k)) {
+					for (var i = 0; i < sorted.elements[k].length; i++) {
+						var $item = $(sorted.elements[k][i]);
 						var $dest = descriptor.hasOwnProperty('template') ? $template : $(descriptor.anchor);
-						resultParser($item, $dest, props);
+						this.executeProperties($item, $dest, props, descriptor);
 					}
 				}
 			}
 		} else {
 			var $dest = descriptor.hasOwnProperty('template') ? $template : $(descriptor.anchor);
 			if (typeof descriptor.bind_fn === 'function') {
-				descriptor.bind_fn(elements.rest, $dest);
+				descriptor.bind_fn(sorted.elements.rest, $dest);
 			} else {
-				$dest[descriptor.bind_fn](elements.rest);
+				$dest[descriptor.bind_fn](sorted.elements.rest);
 			}
 		}
 	}
@@ -416,7 +427,7 @@ Shortcodes.prototype.getTemplate = function(selector) {
 	return $template;
 }
 
-//TODO: what about subtag parses?
+//TODO: what about subtag attribute parses?
 Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
 	var res = {
 		classes: [],
