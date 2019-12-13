@@ -1,2 +1,2 @@
 # shortcodes.js
-JavaScript Shortcode System
+JavaScript Shortcode Engine
