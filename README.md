@@ -1,3 +1,4 @@
+
 # shortcodes.js v1.0.0
 JavaScript Shortcode Engine that uses sequences of DOM elements for templating dynamic an beautiful layouts and preserving SEO where backend development is limited, e.g. Shopify.
 
