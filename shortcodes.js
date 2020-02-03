@@ -1,4 +1,4 @@
-/** shortcodes.js v1.0.1 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+/** shortcodes.js v1.0.0 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
 
 
 //TODO: decide if jQuery is really necessary
@@ -364,7 +364,7 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 	}
 }
 
-Shortcodes.prototype.bind = function(descriptor, val) {
+Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 	var $template = null;
 
 	if (descriptor.hasOwnProperty('template')) {
@@ -389,7 +389,11 @@ Shortcodes.prototype.bind = function(descriptor, val) {
 			}
 
 			var $dest = descriptor.hasOwnProperty('template') ? $template.find(descriptor.item_anchor) : $(descriptor.anchor);
-			$dest[descriptor.bind_fn]($item_template);
+			if (typeof descriptor.bind_fn === 'function') {
+				descriptor.bind_fn($item_template, $dest, descriptor, parsed_attrs);
+			} else {
+				$dest[descriptor.bind_fn]($item_template);
+			}
 		}
 	} else {
 		if (descriptor.hasOwnProperty('elements')) {
@@ -407,7 +411,7 @@ Shortcodes.prototype.bind = function(descriptor, val) {
 		} else {
 			var $dest = descriptor.hasOwnProperty('template') ? $template : $(descriptor.anchor);
 			if (typeof descriptor.bind_fn === 'function') {
-				descriptor.bind_fn(sorted.elements.rest, $dest);
+				descriptor.bind_fn(sorted.elements.rest, $dest, descriptor, parsed_attrs);
 			} else {
 				$dest[descriptor.bind_fn](sorted.elements.rest);
 			}
@@ -415,9 +419,14 @@ Shortcodes.prototype.bind = function(descriptor, val) {
 	}
 
 	if (descriptor.hasOwnProperty('template')) {
-		$(descriptor.anchor)[descriptor.bind_fn]($template);
+		if (typeof descriptor.bind_fn === 'function') {
+			descriptor.bind_fn($template, $(descriptor.anchor), descriptor, parsed_attrs);
+		} else {
+			$(descriptor.anchor)[descriptor.bind_fn]($template);
+		}
 		return $template;
 	}
+
 	return $(descriptor.anchor);
 };
 
@@ -512,12 +521,13 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 	this.exec_fns[shortcode_name] = function(k, attrs, val) {
 		var descriptor = window.d0.clone(self.descriptor_index[k]);
 
+		var parsed_attrs = self.parseAttributes(descriptor, attrs);
+
 		if (descriptor.hasOwnProperty('pre') && descriptor.pre) {
-			descriptor.pre(descriptor, attrs, val);
+			descriptor.pre(descriptor, attrs, val, parsed_attrs);
 		}
 
-		var parsed_attrs = self.parseAttributes(descriptor, attrs);
-		var $template = self.bind(descriptor, val);
+		var $template = self.bind(descriptor, val, parsed_attrs);
 
 		$template.addClass(parsed_attrs.classes.join(' '));
 		$template.css(parsed_attrs.css);
@@ -551,3 +561,5 @@ Shortcodes.prototype.execute = function($elem, callback) {
 };
 
 window.shortcodes = new Shortcodes();
+
+//# sourceMappingURL=shortcodes.js.map
