@@ -1,4 +1,4 @@
-/** shortcodes.js v1.0.0 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+/** shortcodes.js v1.0.2 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
 
 
 //TODO: decide if jQuery is really necessary
@@ -151,20 +151,49 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 	var other_than_rest_count = 0;
 	var first_element_key = null;
 	var last_element_key = null;
+	var max_element_key = null;
 
 	var cycle_counter = 0;
 	var cycle_flag = true;
 
+	//cycles are used for backaging the resto of elements in arrays
+	//cycle is reset once a new element of the repeating styled content is detected
+	//if cycle_flag is set to true, undefined (rest) elements will be stored in an array withing an array elements.rest
 	function newCycle() {
 		if (cycle_flag) {
 			return;
 		}
 		cycle_flag = true;
 		cycle_counter++;
+		//console.log('newCycle', cycle_counter);
 	}
 
-	function resetCycle() {
+	function resetCycle(final) {
 		cycle_flag = false;
+
+		//console.log('resetCycle', final);
+		//memo block is used to keep track defined elements and isert null array items for the ones expected but missing each cycle
+		if (final) {
+			for (var k in memo_block) {
+				elements[k].push(null);
+			}
+			memo_block = newMemoBlock();
+		}
+	}
+
+	//rest has to be always present, it is a default nondefined element
+	elements.rest = [];
+
+	var memo_block_template = {}; //this will hold all the tag names from elements and remove the ones found, so we can generate empty states for the not found ones
+	var memo_block = {};
+
+	//clone temp memo_block
+	function newMemoBlock() {
+		res = {};
+		for (var k in memo_block_template) {
+			res[k] = true;
+		}
+		return res;
 	}
 
 	//extract other than rest
@@ -185,14 +214,16 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 					other_than_rest_count++;
 				}
 			}
+
+			memo_block_template[k] = true;
+			memo_block[k] = true;
 		}
 	}
-	//rest has to be always present, it is a default nondefined element
-	elements.rest = [];
 
 	for (var i = 0; i < val.length; i++) {
 		var $item = $(val[i]);
 
+		//XXX: ??? did we stop using this? this might be a part of legacy code
 		if ($item.hasClass('self-anchor')) {
 			// find yourself in this confusion
 			if (descriptor.anchor === 'self') {
@@ -215,38 +246,42 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 			re.lastIndex = 0;
 
 			if (match && match.length > 1) {
-				green_flag = true;
+				green_flag = true; // skip iteration of elements
 				newCycle();
 
 				item_tags[cycle_counter] = match[1];
 			}
 		}
 
+		//iterating found elements, sort defined
 		if (other_than_rest_count && !green_flag) {
 			for (var k in other_than_rest) {
 
-				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count
+				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count skip iteration
 					continue;
 				}
 
-				//XXX: this is a temporary and very bad solution
+				//XXX: this is a temporary and very bad solution | this was written to be able to use images inside the ul/li as secondary images
 				if (k === 'img' && $item.find('li').length) {
 					continue;
 				}
 
 				var $inner = $item.find(k); //gotta cover all the possible cases of undefined generated html
 
-				if ($item.is(k) || $inner.length) {
+				if ($item.is(k) || $inner.length) { //if element is found
 					if ($inner.length) {
 						$item = $inner.first();
 					}
 
 					elements[k].push($item);
-					green_flag = true;
+					green_flag = true; // don't iterate rest
+
 					//use interupts only if it is a repeater element, otherwise store all
 					if (descriptor.hasOwnProperty('item_template')) {
+						delete memo_block[k];
+
 						if (k === last_element_key) {
-							resetCycle();
+							resetCycle(true);
 						} else {
 							newCycle();
 						}
@@ -256,12 +291,14 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 			}
 		}
 
+		//iterating found elements, sort undefined
 		if (!green_flag) {
 			//collecting other elements
 			if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
-				resetCycle();
+				resetCycle(false);
 
 				if (!elements.rest[cycle_counter]) {
+					delete memo_block['rest'];
 					elements.rest[cycle_counter] = [];
 				}
 				elements.rest[cycle_counter].push($item[0]);
@@ -272,10 +309,30 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 		}
 	}
 
+
+	// calculate which element has the most entries = number of slides
+	// this will be used as a slide delimiter later on
+	var max_count = null;
+
+	for (var k in other_than_rest) {
+		var c = elements[k].length;
+
+		if (max_element_key === null) {
+			max_element_key = k;
+			max_count = c;
+		} else {
+			if (c > max_count) {
+				max_element_key = k;
+				max_count = c;
+			}
+		}
+	}
+
 	return {	elements: elements,
 				item_tags: item_tags,
 				first_element_key: first_element_key,
-				last_element_key: last_element_key
+				last_element_key: last_element_key,
+				max_element_key: max_element_key
 	};
 }
 
@@ -374,7 +431,7 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 	var sorted = this.sortDOM(descriptor, val);
 
 	if (descriptor.hasOwnProperty('item_template')) {
-		for (var i = 0; i < sorted.elements[sorted.first_element_key].length; i++) {
+		for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
 			var $item_template = this.getTemplate(descriptor.item_template);
 			if (sorted.item_tags[i]) {
 				$item_template.addClass(sorted.item_tags[i]);
@@ -561,5 +618,3 @@ Shortcodes.prototype.execute = function($elem, callback) {
 };
 
 window.shortcodes = new Shortcodes();
-
-//# sourceMappingURL=shortcodes.js.map
