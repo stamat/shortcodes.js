@@ -181,7 +181,7 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 		}
 	}
 
-	//rest has to be always present, it is a default nondefined element
+	//rest has to be always present, it is a default undefined element
 	elements.rest = [];
 
 	var memo_block_template = {}; //this will hold all the tag names from elements and remove the ones found, so we can generate empty states for the not found ones
@@ -246,15 +246,15 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 			re.lastIndex = 0;
 
 			if (match && match.length > 1) {
-				green_flag = true; // skip iteration of elements
 				newCycle();
 
 				item_tags[cycle_counter] = match[1];
+				continue;
 			}
 		}
 
 		//iterating found elements, sort defined
-		if (other_than_rest_count && !green_flag) {
+		if (other_than_rest_count) {
 			for (var k in other_than_rest) {
 
 				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count skip iteration
@@ -273,8 +273,22 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 						$item = $inner.first();
 					}
 
+					// if an element is found that belongs to a memo block but it's already processed - this means a new cycle must begin
+					if (descriptor.hasOwnProperty('item_template') && !memo_block.hasOwnProperty(k)) {
+						//console.log('next cycle detected', JSON.stringify(memo_block));
+
+						resetCycle(true);
+						newCycle();
+					}
+
 					elements[k].push($item);
-					green_flag = true; // don't iterate rest
+					green_flag = true; // don't iterate the rest
+					//console.log(k);
+
+					// after adding elemets to the new cyctle there is nothing else to do
+					if (descriptor.hasOwnProperty('item_template') && !memo_block.hasOwnProperty(k)) {
+						break;
+					}
 
 					//use interupts only if it is a repeater element, otherwise store all
 					if (descriptor.hasOwnProperty('item_template')) {
@@ -291,7 +305,7 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 			}
 		}
 
-		//iterating found elements, sort undefined
+		//iterating found elements, sort undefined = rest
 		if (!green_flag) {
 			//collecting other elements
 			if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
@@ -302,6 +316,7 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 					elements.rest[cycle_counter] = [];
 				}
 				elements.rest[cycle_counter].push($item[0]);
+				//console.log('rest');
 
 			} else {
 				elements.rest.push($item[0]);
