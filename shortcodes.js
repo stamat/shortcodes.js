@@ -7,6 +7,9 @@ function Shortcodes() {
 	this.descriptor_index = {};
 	this.exec_fns = {};
 
+	this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
+	this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
+
 	//Object deep clone from d0.js @stamat
 	if (!window.hasOwnProperty('d0')) {
 		window.d0 = {};
@@ -82,6 +85,28 @@ function Shortcodes() {
 		};
 	}
 }
+
+Shortcodes.prototype.shopifyImageLink = function(src, width) {
+	var pref = '$1';
+	var suf = '$2';
+	var re = this.shopify_img_replacer_re;
+
+	if (!re.test(src)) {
+		return src;
+	}
+
+	if (this.shopify_img_re.test(src)) {
+		suf = '$3';
+		re = this.shopify_img_re;
+	}
+
+	if (!width) {
+		width = 100;
+	}
+
+	var replacement = pref+'_'+width+'x'+suf;
+	return src.replace(re, replacement);
+};
 
 Shortcodes.prototype.parseDOM = function($elem, one) {
 	var map = {};
@@ -357,12 +382,26 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 	if (props.extract_fn === 'attr') {
 		if (typeof props.extract_attr === 'string') {
 			extract = $item[props.extract_fn](props.extract_attr);
+
+			if ($item.is('img') && props.extract_attr === 'src') {
+				if (extract && this.shopify_img_re.test(extract)) {
+					extract = extract.replace(this.shopify_img_re, '$1$3');
+				}
+			}
 		} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
 			extract = [];
 			for (var i = 0; i < props.extract_attr.length; i++) {
 				if (props.extract_attr[i] === 'html') {
 					extract.push($item.html());
 					continue;
+				}
+
+				if ($item.is('img') && props.extract_attr[i] === 'src') {
+					var src = $item.attr('src');
+					if (src && this.shopify_img_re.test(src)) {
+						extract.push(src.replace(this.shopify_img_re, '$1$3'));
+						continue;
+					}
 				}
 				var attr = props.extract_attr[i];
 				extract.push($item[props.extract_fn](attr));
