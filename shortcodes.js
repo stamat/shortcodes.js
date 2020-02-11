@@ -1,4 +1,4 @@
-/** shortcodes.js v1.0.2 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+/** shortcodes.js v1.0.3 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
 
 
 //TODO: decide if jQuery is really necessary
@@ -179,38 +179,26 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 	var max_element_key = null;
 
 	var cycle_counter = 0;
-	var cycle_flag = true;
+	var subtag_first_flag = false;
 
-	//cycles are used for backaging the resto of elements in arrays
-	//cycle is reset once a new element of the repeating styled content is detected
-	//if cycle_flag is set to true, undefined (rest) elements will be stored in an array withing an array elements.rest
+	//cycles are used for backaging the rest of elements in arrays
 	function newCycle() {
-		if (cycle_flag) {
-			return;
-		}
-		cycle_flag = true;
-		cycle_counter++;
-		//console.log('newCycle', cycle_counter);
+		fillTheGaps();
+		cycle_counter += 1;
 	}
 
-	function resetCycle(final) {
-		cycle_flag = false;
-
-		//console.log('resetCycle', final);
-		//memo block is used to keep track defined elements and isert null array items for the ones expected but missing each cycle
-		if (final) {
-			for (var k in memo_block) {
-				elements[k].push(null);
-			}
-			memo_block = newMemoBlock();
-		}
-	}
-
-	//rest has to be always present, it is a default undefined element
+	//rest has to be always present, it is a default collection of all undefined elements
 	elements.rest = [];
 
 	var memo_block_template = {}; //this will hold all the tag names from elements and remove the ones found, so we can generate empty states for the not found ones
 	var memo_block = {};
+
+	function fillTheGaps() {
+		for (var k in memo_block) {
+			elements[k].push(null);
+		}
+		memo_block = newMemoBlock();
+	}
 
 	//clone temp memo_block
 	function newMemoBlock() {
@@ -271,9 +259,12 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 			re.lastIndex = 0;
 
 			if (match && match.length > 1) {
-				newCycle();
+				if (cycle_counter || subtag_first_flag) {
+					newCycle();
+				}
 
 				item_tags[cycle_counter] = match[1];
+				subtag_first_flag = true;
 				continue;
 			}
 		}
@@ -300,31 +291,16 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 
 					// if an element is found that belongs to a memo block but it's already processed - this means a new cycle must begin
 					if (descriptor.hasOwnProperty('item_template') && !memo_block.hasOwnProperty(k)) {
-						//console.log('next cycle detected', JSON.stringify(memo_block));
-
-						resetCycle(true);
 						newCycle();
 					}
 
 					elements[k].push($item);
-					green_flag = true; // don't iterate the rest
-					//console.log(k);
 
-					// after adding elemets to the new cyctle there is nothing else to do
-					if (descriptor.hasOwnProperty('item_template') && !memo_block.hasOwnProperty(k)) {
-						break;
-					}
-
-					//use interupts only if it is a repeater element, otherwise store all
 					if (descriptor.hasOwnProperty('item_template')) {
 						delete memo_block[k];
-
-						if (k === last_element_key) {
-							resetCycle(true);
-						} else {
-							newCycle();
-						}
 					}
+					green_flag = true; // don't iterate the rest
+
 					break;
 				}
 			}
@@ -334,19 +310,19 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 		if (!green_flag) {
 			//collecting other elements
 			if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
-				resetCycle(false);
-
 				if (!elements.rest[cycle_counter]) {
 					delete memo_block['rest'];
 					elements.rest[cycle_counter] = [];
 				}
 				elements.rest[cycle_counter].push($item[0]);
-				//console.log('rest');
-
 			} else {
 				elements.rest.push($item[0]);
 			}
 		}
+	}
+
+	if (descriptor.hasOwnProperty('item_template')) {
+		fillTheGaps();
 	}
 
 
