@@ -1,4 +1,4 @@
-/** shortcodes.js v1.0.2 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+/** shortcodes.js v1.0.3 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
 
 
 //TODO: decide if jQuery is really necessary
@@ -6,6 +6,9 @@
 function Shortcodes() {
 	this.descriptor_index = {};
 	this.exec_fns = {};
+
+	this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
+	this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
 
 	//Object deep clone from d0.js @stamat
 	if (!window.hasOwnProperty('d0')) {
@@ -83,6 +86,28 @@ function Shortcodes() {
 	}
 }
 
+Shortcodes.prototype.shopifyImageLink = function(src, width) {
+	var pref = '$1';
+	var suf = '$2';
+	var re = this.shopify_img_replacer_re;
+
+	if (!re.test(src)) {
+		return src;
+	}
+
+	if (this.shopify_img_re.test(src)) {
+		suf = '$3';
+		re = this.shopify_img_re;
+	}
+
+	if (!width) {
+		width = 100;
+	}
+
+	var replacement = pref+'_'+width+'x'+suf;
+	return src.replace(re, replacement);
+};
+
 Shortcodes.prototype.parseDOM = function($elem, one) {
 	var map = {};
  	var last_section = null;
@@ -154,38 +179,26 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 	var max_element_key = null;
 
 	var cycle_counter = 0;
-	var cycle_flag = true;
+	var subtag_first_flag = false;
 
-	//cycles are used for backaging the resto of elements in arrays
-	//cycle is reset once a new element of the repeating styled content is detected
-	//if cycle_flag is set to true, undefined (rest) elements will be stored in an array withing an array elements.rest
+	//cycles are used for backaging the rest of elements in arrays
 	function newCycle() {
-		if (cycle_flag) {
-			return;
-		}
-		cycle_flag = true;
-		cycle_counter++;
-		//console.log('newCycle', cycle_counter);
+		fillTheGaps();
+		cycle_counter += 1;
 	}
 
-	function resetCycle(final) {
-		cycle_flag = false;
-
-		//console.log('resetCycle', final);
-		//memo block is used to keep track defined elements and isert null array items for the ones expected but missing each cycle
-		if (final) {
-			for (var k in memo_block) {
-				elements[k].push(null);
-			}
-			memo_block = newMemoBlock();
-		}
-	}
-
-	//rest has to be always present, it is a default nondefined element
+	//rest has to be always present, it is a default collection of all undefined elements
 	elements.rest = [];
 
 	var memo_block_template = {}; //this will hold all the tag names from elements and remove the ones found, so we can generate empty states for the not found ones
 	var memo_block = {};
+
+	function fillTheGaps() {
+		for (var k in memo_block) {
+			elements[k].push(null);
+		}
+		memo_block = newMemoBlock();
+	}
 
 	//clone temp memo_block
 	function newMemoBlock() {
@@ -246,15 +259,18 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 			re.lastIndex = 0;
 
 			if (match && match.length > 1) {
-				green_flag = true; // skip iteration of elements
-				newCycle();
+				if (cycle_counter || subtag_first_flag) {
+					newCycle();
+				}
 
 				item_tags[cycle_counter] = match[1];
+				subtag_first_flag = true;
+				continue;
 			}
 		}
 
 		//iterating found elements, sort defined
-		if (other_than_rest_count && !green_flag) {
+		if (other_than_rest_count) {
 			for (var k in other_than_rest) {
 
 				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count skip iteration
@@ -273,40 +289,40 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 						$item = $inner.first();
 					}
 
-					elements[k].push($item);
-					green_flag = true; // don't iterate rest
+					// if an element is found that belongs to a memo block but it's already processed - this means a new cycle must begin
+					if (descriptor.hasOwnProperty('item_template') && !memo_block.hasOwnProperty(k)) {
+						newCycle();
+					}
 
-					//use interupts only if it is a repeater element, otherwise store all
+					elements[k].push($item);
+
 					if (descriptor.hasOwnProperty('item_template')) {
 						delete memo_block[k];
-
-						if (k === last_element_key) {
-							resetCycle(true);
-						} else {
-							newCycle();
-						}
 					}
+					green_flag = true; // don't iterate the rest
+
 					break;
 				}
 			}
 		}
 
-		//iterating found elements, sort undefined
+		//iterating found elements, sort undefined = rest
 		if (!green_flag) {
 			//collecting other elements
 			if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
-				resetCycle(false);
-
 				if (!elements.rest[cycle_counter]) {
 					delete memo_block['rest'];
 					elements.rest[cycle_counter] = [];
 				}
 				elements.rest[cycle_counter].push($item[0]);
-
 			} else {
 				elements.rest.push($item[0]);
 			}
 		}
+	}
+
+	if (descriptor.hasOwnProperty('item_template')) {
+		fillTheGaps();
 	}
 
 
@@ -342,12 +358,26 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 	if (props.extract_fn === 'attr') {
 		if (typeof props.extract_attr === 'string') {
 			extract = $item[props.extract_fn](props.extract_attr);
+
+			if ($item.is('img') && props.extract_attr === 'src') {
+				if (extract && this.shopify_img_re.test(extract)) {
+					extract = extract.replace(this.shopify_img_re, '$1$3');
+				}
+			}
 		} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
 			extract = [];
 			for (var i = 0; i < props.extract_attr.length; i++) {
 				if (props.extract_attr[i] === 'html') {
 					extract.push($item.html());
 					continue;
+				}
+
+				if ($item.is('img') && props.extract_attr[i] === 'src') {
+					var src = $item.attr('src');
+					if (src && this.shopify_img_re.test(src)) {
+						extract.push(src.replace(this.shopify_img_re, '$1$3'));
+						continue;
+					}
 				}
 				var attr = props.extract_attr[i];
 				extract.push($item[props.extract_fn](attr));
