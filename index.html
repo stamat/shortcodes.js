@@ -112,13 +112,13 @@
                 vertical-align: middle;
                 font-weight: bold;
                 transition: all 250ms ease-in-out;
-                border: solid 1px #ff9a9e;
+                border: solid 1px #f37f47;
                 font-size: 12px;
                 letter-spacing: 2px;
                 text-transform: uppercase;
 
-                background-color: white;
-                color: #ff9a9e;
+                background-color: #f37f47;
+                color: white;
             }
 
             .button.white {
@@ -138,6 +138,12 @@
                 padding-left: 16px;
                 padding-right: 16px;
             }
+
+			.button.green {
+				background: #9ABAAF;
+				color: white;
+				border-color: #9ABAAF;
+			}
 
             .button.gradient {
                 background-size: 200%;
@@ -255,8 +261,8 @@
 				}
 
                 .button:hover {
-                    background-color: #ff9a9e;
-                    color: white;
+                    background-color: white;
+                    color: #f37f47;
                 }
 
                 .button.white:hover {
@@ -274,6 +280,11 @@
                     background-color: transparent;
                     background-position: 50% 0px;
                 }
+
+				.button.green:hover {
+					background: white;
+					color: #9ABAAF;
+				}
 
 				.code-button:hover {
 					background: rgba(255,255,255,0);
@@ -442,6 +453,35 @@
 				position: relative;
 				margin-top: 60px;
 				margin-bottom: 60px;
+			}
+
+			section.carousel .carousel-item {
+				padding-left: 8px;
+				padding-right: 8px;
+			}
+
+			section.carousel .carousel-item .image {
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
+			}
+
+			section.carousel .slider {
+				margin-left: -8px;
+				margin-right: -8px;
+			}
+
+			section.carousel .carousel-item .title {
+				margin-bottom: 10px;
+			}
+
+			section.carousel .carousel-item .text p {
+				margin-top: 0px;
+				color: #595959;
+			}
+
+			section.carousel .carousel-item {
+				padding-bottom: 10px;
 			}
         </style>
 
@@ -768,12 +808,21 @@
 					item_template: '.carousel-item',
 					item_anchor: '.slides-landing',
 					callback: function($template) {
-						$template.find('.slides').slick({
+						$template.find('.slides').not('.slick-initialized').slick({
 							slidesToShow: 3,
   							slidesToScroll: 1,
 							dots: true,
 							arrows: false,
-							swipeToSlide: true
+							swipeToSlide: true,
+							responsive: [
+							    {
+							      breakpoint: 960,
+							      settings: {
+							        slidesToShow: 1,
+							        slidesToScroll: 1
+							      }
+							    }
+							]
 						});
 					},
 					elements: {
@@ -792,7 +841,7 @@
 							extract_fn: 'attr',
 							extract_attr: ['href', 'title', 'html'],
 							bind_fn: function(extract, $dest, props) {
-								$dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button">'+extract[2]+'</a>');
+								$dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
 							},
 							anchor_element: 'item'
 						},
@@ -857,12 +906,17 @@
 					$('.code-button.active').not(this).parent().find('.code').stop(true).fadeOut();
 					$('.code-button.active').not(this).removeClass('active');
 
+					var $code = $(this).parent().find('.code');
+					var $root = $(this).closest('.shortcode-js');
+
 					if ($(this).hasClass('active')) {
 						$(this).removeClass('active');
-						$(this).parent().find('.code').stop(true).fadeOut();
+						$code.stop(true).fadeOut();
 					} else {
 						$(this).addClass('active');
-						$(this).parent().find('.code').stop(true).fadeIn();
+						$code.css('max-height', $root.height() - 118);
+						$code.css('height', 'calc(100vh - 118px)');
+						$code.stop(true).fadeIn();
 					}
 				});
 
