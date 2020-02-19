@@ -3,12 +3,31 @@
 
 //TODO: decide if jQuery is really necessary
 
-function Shortcodes() {
+function Shortcodes(options) {
 	this.descriptor_index = {};
 	this.exec_fns = {};
 
 	this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
 	this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
+
+	if (!options) {
+		options = {};
+	}
+
+	this.defaults = {
+		templates: '#templates',
+		template_class: 'template',
+		self_anchor_class: 'self-anchor',
+		placement_class_prefix: 'shortcode-landing'
+	};
+
+	this.options = options;
+
+	for (var k in this.defaults) {
+		if (!this.options.hasOwnProperty(k)) {
+			this.options[k] = this.defaults[k];
+		}
+	}
 
 	//Object deep clone from d0.js @stamat
 	if (!window.hasOwnProperty('d0')) {
@@ -53,7 +72,7 @@ function Shortcodes() {
 			'function': 7,
 			'regexp': 8,
 			'date': 9
-		}
+		};
 
 		window.d0.clone = function(o) {
 			var res = null;
@@ -112,7 +131,9 @@ Shortcodes.prototype.parseDOM = function($elem, one) {
 	var map = {};
  	var last_section = null;
 
- 	var children = $($elem).children();
+	$elem = $($elem);
+
+ 	var children = $elem.length > 1 ? $elem : $($elem).children();
  	var re = /\[([\/a-z0-9\-_\s]+)\]/gi;
  	var shortcode_counter = 0;
 
@@ -134,7 +155,7 @@ Shortcodes.prototype.parseDOM = function($elem, one) {
  			}
 
  			last_section = match[1] + ' sc' + shortcode_counter;
- 			var $self_locator = $('<div class="self-anchor shortcode-'+last_section.split(/\s+/)[0]+' sc'+shortcode_counter+'" />');
+ 			var $self_locator = $('<div class="'+ this.options.self_anchor_class +' shortcode-'+last_section.split(/\s+/)[0]+' sc'+shortcode_counter+'" />');
 
  			if (!map.hasOwnProperty(last_section)) {
  				map[last_section] = [];
@@ -353,7 +374,7 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 }
 
 //TODO: simplify with declarative programming
-Shortcodes.prototype.executeProperties = function($item, $dest, props, descriptor) {
+Shortcodes.prototype.executeProperties = function($item, $dest, props, descriptor, num) {
 	// Extract DOM attributes
 	if (props.extract_fn === 'attr') {
 		if (typeof props.extract_attr === 'string') {
@@ -471,7 +492,7 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 				var props = descriptor.elements[k];
 				if (sorted.elements[k][i]) { //if the element exists, may be an uneven number
 					var $item = $(sorted.elements[k][i]);
-					this.executeProperties($item, $item_template, props, descriptor);
+					this.executeProperties($item, $item_template, props, descriptor, i);
 				}
 			}
 
@@ -491,7 +512,7 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 					for (var i = 0; i < sorted.elements[k].length; i++) {
 						var $item = $(sorted.elements[k][i]);
 						var $dest = descriptor.hasOwnProperty('template') ? $template : $(descriptor.anchor);
-						this.executeProperties($item, $dest, props, descriptor);
+						this.executeProperties($item, $dest, props, descriptor, i);
 					}
 				}
 			}
@@ -518,13 +539,14 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 };
 
 Shortcodes.prototype.getTemplate = function(selector) {
-	var $template = $('#templates').find(selector+'.template').clone();
-	$template.removeClass('template');
+	var $template = $(this.options.templates).find(selector+'.'+this.options.template_class).clone();
+	$template.removeClass(this.options.template_class);
 	return $template;
 }
 
 //TODO: what about subtag attribute parses?
 Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
+	var self = this;
 	var res = {
 		classes: [],
 		css: {}
@@ -562,7 +584,7 @@ Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
 			if (pts[0] === 'content') {
 				descriptor.anchor = 'self';
 			} else {
-				descriptor.anchor = '.shortcode-landing-' + pts[0];
+				descriptor.anchor = '.' + self.options.placement_class_prefix + '-' + pts[0];
 			}
 		}
 	}
@@ -618,6 +640,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 
 		$template.addClass(parsed_attrs.classes.join(' '));
 		$template.css(parsed_attrs.css);
+		$template.addClass('shortcode-js');
 
 		//TODO: per item callback
 		if (descriptor.hasOwnProperty('callback') && descriptor.callback) {
@@ -647,4 +670,12 @@ Shortcodes.prototype.execute = function($elem, callback) {
 	}
 };
 
-window.shortcodes = new Shortcodes();
+Shortcodes.prototype.clear = function() {
+	$('.shortcode-js').remove();
+	$('.self-anchor').remove();
+};
+
+Shortcodes.prototype.reinit = function($elem, callback) {
+	this.clear();
+	this.execute($elem, callback);
+};

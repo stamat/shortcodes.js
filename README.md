@@ -1,12 +1,21 @@
-# shortcodes.js v1.0.1
-JavaScript Shortcode Engine that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.
+# shortcodes.js v1.0.3
+JavaScript Shortcode Engine is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.
+
+[DEMO HERE ⤻](http://stamat.github.io/shortcodes.js/)
 
 ## Dependencies
 
 **jQuery 1.11.3+**
 
 ## How it works?
-The shortcodes work by interpreting different text formatting, set in WYSIWYG editor under the shortcode tag, predefined for each tag. For example a simple marquee shortcode will interpret an H1 (Header size 1) as a title of the marque and an image inserted into the text as a background image. All this based on provided descriptor and template DOM Element....
+Shortcodes.js works by interpreting sequences of different text formatting, set in WYSIWYG editor, under the **shortcode tag**, predefined for each tag via provided **binding descriptor** and it's respective **HTML template**.
+
+For example, a simple marquee shortcode will interpret an H1 (Header size 1) as a title of the marque and an image inserted into the text as a background image.
+
+### Binding Descriptor
+The **binding descriptor** is a set of instructions on what sequence to expect and how to perform the binding of the **HTML template**. It is the second parameter of the `shortcode.register()` function, being that the first parameter is the name of the shortcode.
+
+
 
 *TODO: basic code setup and demo in action*
 
