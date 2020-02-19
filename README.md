@@ -1,5 +1,5 @@
 # shortcodes.js v1.0.3
-JavaScript Shortcode Engine is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.
+Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.
 
 [DEMO HERE ⤻](http://stamat.github.io/shortcodes.js/)
 
