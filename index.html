@@ -10,6 +10,8 @@
 
         <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700|IBM+Plex+Mono:400,600&display=swap" rel="stylesheet">
 		<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
+		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
 
         <style>
             html, body {
@@ -17,6 +19,7 @@
                 color: #1d1d1d;
                 padding: 0px;
                 margin: 0px;
+				overflow-x: hidden;
             }
 
             body main {
@@ -109,13 +112,13 @@
                 vertical-align: middle;
                 font-weight: bold;
                 transition: all 250ms ease-in-out;
-                border: solid 1px #ff9a9e;
+                border: solid 1px #f37f47;
                 font-size: 12px;
                 letter-spacing: 2px;
                 text-transform: uppercase;
 
-                background-color: white;
-                color: #ff9a9e;
+                background-color: #f37f47;
+                color: white;
             }
 
             .button.white {
@@ -135,6 +138,12 @@
                 padding-left: 16px;
                 padding-right: 16px;
             }
+
+			.button.green {
+				background: #9ABAAF;
+				color: white;
+				border-color: #9ABAAF;
+			}
 
             .button.gradient {
                 background-size: 200%;
@@ -225,12 +234,14 @@
 				left: 0px;
 				width: 100%;
 				background: white;
-				max-height: calc(100vh - 100px);
+				max-height: calc(100vh - 118px);
 				overflow: auto;
 				color: black;
 				box-sizing: border-box;
 				padding: 16px;
 				display: none;
+				box-shadow: 0px 0px 5px rgba(0,0,0,0.2);
+				border: 1px solid #ccc;
 			}
 
             @media screen and (min-width: 960px) {
@@ -245,9 +256,13 @@
 					float: left;
 				}
 
+				body.editor-active .container main > .content  {
+					margin-left: 500px;
+				}
+
                 .button:hover {
-                    background-color: #ff9a9e;
-                    color: white;
+                    background-color: white;
+                    color: #f37f47;
                 }
 
                 .button.white:hover {
@@ -265,6 +280,11 @@
                     background-color: transparent;
                     background-position: 50% 0px;
                 }
+
+				.button.green:hover {
+					background: white;
+					color: #9ABAAF;
+				}
 
 				.code-button:hover {
 					background: rgba(255,255,255,0);
@@ -306,7 +326,7 @@
 				}
 
                 .hero h1 {
-                    font-size: 50px;
+                    font-size: 32px;
                     line-height: 50px;
                     letter-spacing: 5px;
                 }
@@ -321,6 +341,11 @@
                 .button.gradient {
                     line-height: 44px;
                 }
+
+				section.carousel {
+					margin-top: 30px;
+					margin-bottom: 30px;
+				}
             }
 
             .modally .button-wrap {
@@ -356,11 +381,14 @@
 			.sidebar {
 				position: fixed;
 				z-index: 99999;
-				width: 500px;
+				max-width: 500px;
+				background: white;
+				width: calc(100% - 40px);
 				height: 100vh;
 				top: 0px;
 				left: 0px;
 				transition: all 250ms ease-in-out;
+				transform: translateX(-100%);
 			}
 
 			.sidebar #editor {
@@ -380,8 +408,80 @@
 			}
 
 			.container main > .content {
-				margin-left: 500px;
 				transition: all 250ms ease-in-out;
+			}
+
+			.sidebar .carret {
+				position: absolute;
+			    right: -39px;
+			    bottom: 0px;
+			    width: 40px;
+			    text-align: center;
+			    height: 40px;
+			    background: white;
+				border-top: 1px solid #ccc;
+				border-right: 1px solid #ccc;
+			}
+
+			.sidebar .carret a {
+				display: block;
+				width: 40px;
+				height: 40px;
+			}
+
+			.sidebar .carret img {
+				vertical-align: middle;
+				height: 100%;
+				transition: all 250ms ease-in-out;
+			}
+
+			body.editor-active .sidebar .carret img {
+				transform: rotate(180deg);
+			}
+
+			body.editor-active .sidebar {
+				transform: translateX(0px);
+			}
+
+			.spacer {
+				display: block;
+				width: 100%;
+				visibility: hidden;
+			}
+
+			section.carousel {
+				position: relative;
+				margin-top: 60px;
+				margin-bottom: 60px;
+			}
+
+			section.carousel .carousel-item {
+				padding-left: 8px;
+				padding-right: 8px;
+			}
+
+			section.carousel .carousel-item .image {
+				background-size: cover;
+				background-position: center;
+				background-repeat: no-repeat;
+			}
+
+			section.carousel .slider {
+				margin-left: -8px;
+				margin-right: -8px;
+			}
+
+			section.carousel .carousel-item .title {
+				margin-bottom: 10px;
+			}
+
+			section.carousel .carousel-item .text p {
+				margin-top: 0px;
+				color: #595959;
+			}
+
+			section.carousel .carousel-item {
+				padding-bottom: 10px;
 			}
         </style>
 
@@ -394,7 +494,7 @@
 			var shortcodes = new Shortcodes();
 		</script>
     </head>
-    <body>
+    <body class="editor-active">
         <div class="container">
 			<div class="sidebar">
 				<div id="editor">
@@ -403,9 +503,31 @@
 						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
 						<h1>[shortcodes.js]</h1>
 						<h2>JavaScript Front-end Shortcode Engine.</h2>
-						<p>JavaScript Shortcode Engine is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<a href="https://github.com/stamat/shortcodes.js">View on GitHub</a>
+						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
+						<p>[carousel]
+						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
+						<h1>Slide 1</h1>
+						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
+						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
+						<h1>Slide 2</h1>
+						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
+						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
+						<h1>Slide 3</h1>
+						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
+						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
+						<h1>Slide 4</h1>
+						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
 					</div>
+				</div>
+				<div class="carret">
+					<a href="#" class="toggle-editor">
+						<img src="https://imgur.com/UgOaSLI.png" />
+					</a>
 				</div>
 			</div>
             <main>
@@ -563,8 +685,187 @@
 					}
 				});
 			</script>
+
+			<section class="carousel template">
+		        <div class="center above">
+		            <div class="slides slides-landing">
+
+		            </div>
+		        </div>
+				<div class="code-wrap">
+					<a href="#" class="code-button black">
+						<img src="https://i.imgur.com/P197gya.png" /><span class="label"><span class="show">show</span><span class="hide">hide</span> code</span>
+					</a>
+					<div class="code">
+						<h2>[carousel]</h2>
+						<div class="columns clearfix">
+							<div class="column">
+								<h3>HTML Template</h3>
+								<pre class="line-numbers">
+									<code class="language-html">
+&#x3C;section class=&#x22;carousel template&#x22;&#x3E;
+&#x9;&#x3C;div class=&#x22;center above&#x22;&#x3E;
+&#x9;&#x9;&#x3C;div class=&#x22;slides slides-landing&#x22;&#x3E;
+
+&#x9;&#x9;&#x3C;/div&#x3E;
+&#x9;&#x3C;/div&#x3E;
+&#x3C;/section&#x3E;
+
+&#x3C;div class=&#x22;carousel-item template&#x22;&#x3E;
+&#x9;&#x3C;div class=&#x22;inner&#x22;&#x3E;
+&#x9;&#x9;&#x3C;div class=&#x22;image-wrap&#x22;&#x3E;
+&#x9;&#x9;&#x9;&#x3C;div class=&#x22;image image-landing&#x22;&#x3E;
+&#x9;&#x9;&#x9;&#x9;&#x3C;img class=&#x22;spacer&#x22; src=&#x22;https://imgur.com/YLLYqYt.png&#x22; /&#x3E;
+&#x9;&#x9;&#x9;&#x3C;/div&#x3E;
+&#x9;&#x9;&#x3C;/div&#x3E;
+&#x9;&#x9;&#x3C;h3 class=&#x22;title title-landing&#x22;&#x3E;&#x3C;/h3&#x3E;
+&#x9;&#x9;&#x3C;div class=&#x22;text text-landing&#x22;&#x3E;&#x3C;/div&#x3E;
+&#x9;&#x9;&#x3C;div class=&#x22;button-wrap link-landing&#x22;&#x3E;&#x3C;/div&#x3E;
+&#x9;&#x3C;/div&#x3E;
+&#x3C;/div&#x3E;
+									</code>
+								</pre>
+							</div>
+							<div class="column">
+								<h3>JavaScript Descriptor</h3>
+								<pre class="line-numbers">
+<code class="language-javascript">shortcodes.register('carousel', {
+	anchor: '.shortcode-landing',
+	bind_fn: 'append',
+	template: 'section.carousel',
+	item_template: '.carousel-item',
+	item_anchor: '.slides-landing',
+	callback: function($template) {
+		$template.find('.slides').slick({
+			slidesToShow: 3,
+			slidesToScroll: 1,
+			dots: true,
+			arrows: false,
+			swipeToSlide: true
+		});
+	},
+	elements: {
+		img: {
+			count: 'many',
+			bind_fn: 'css',
+			bind_property: 'background-image',
+			extract_fn: 'attr',
+			extract_attr: 'src',
+			anchor: '.image-landing',
+			anchor_element: 'item'
+		},
+		a: {
+			count: 'many',
+			anchor: '.link-landing',
+			extract_fn: 'attr',
+			extract_attr: ['href', 'title', 'html'],
+			bind_fn: function(extract, $dest, props) {
+				$dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button">'+extract[2]+'</a>');
+			},
+			anchor_element: 'item'
+		},
+		h1: {
+			count: 'many',
+			bind_fn: 'html',
+			anchor: '.title-landing',
+			extract_fn: 'html',
+			anchor_element: 'item'
+		},
+		rest: {
+			anchor: '.text-landing',
+			bind_fn: 'append',
+			extract_fn: 'self',
+			anchor_element: 'item'
+		}
+	}
+});</code>
+							</div>
+						</div>
+						</pre>
+					</div>
+				</div>
+		    </section>
+
+			<div class="carousel-item template">
+				<div class="inner">
+					<div class="image-wrap">
+						<div class="image image-landing">
+							<img class="spacer" src="https://imgur.com/YLLYqYt.png" />
+						</div>
+					</div>
+					<h3 class="title title-landing"></h3>
+					<div class="text text-landing"></div>
+					<div class="button-wrap link-landing"></div>
+				</div>
+			</div>
+
+
+			<script type="text/javascript">
+				shortcodes.register('carousel', {
+					anchor: '.shortcode-landing',
+					bind_fn: 'append',
+					template: 'section.carousel',
+					item_template: '.carousel-item',
+					item_anchor: '.slides-landing',
+					callback: function($template) {
+						$template.find('.slides').not('.slick-initialized').slick({
+							slidesToShow: 3,
+  							slidesToScroll: 1,
+							dots: true,
+							arrows: false,
+							swipeToSlide: true,
+							responsive: [
+							    {
+							      breakpoint: 960,
+							      settings: {
+							        slidesToShow: 1,
+							        slidesToScroll: 1
+							      }
+							    }
+							]
+						});
+					},
+					elements: {
+						img: {
+							count: 'many',
+							bind_fn: 'css',
+							bind_property: 'background-image',
+							extract_fn: 'attr',
+							extract_attr: 'src',
+							anchor: '.image-landing',
+							anchor_element: 'item'
+						},
+						a: {
+							count: 'many',
+							anchor: '.link-landing',
+							extract_fn: 'attr',
+							extract_attr: ['href', 'title', 'html'],
+							bind_fn: function(extract, $dest, props) {
+								$dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+							},
+							anchor_element: 'item'
+						},
+						h1: {
+							count: 'many',
+							bind_fn: 'html',
+							anchor: '.title-landing',
+							extract_fn: 'html',
+							anchor_element: 'item'
+						},
+						rest: {
+							anchor: '.text-landing',
+							bind_fn: 'append',
+							extract_fn: 'self',
+							anchor_element: 'item'
+						}
+					}
+				});
+			</script>
+
 		</div>
 
+		<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+		<!-- initialize Quill WYSIWYG editor -->
 		<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 		<script type="text/javascript">
 			var toolbarOptions = [
@@ -596,14 +897,7 @@
 			});
         </script>
 
-		<script type="text/javascript">
-			$(document).ready(function(){
-				shortcodes.execute($('#editor .ql-editor').clone(), function(){
-					console.log("Fuck yeah!");
-				});
-			});
-		</script>
-
+		<!-- initialize other demo-only actions -->
 		<script type="text/javascript">
 			$(document).ready(function(){
 				$('body').on('click', '.code-button', function(e) {
@@ -612,16 +906,45 @@
 					$('.code-button.active').not(this).parent().find('.code').stop(true).fadeOut();
 					$('.code-button.active').not(this).removeClass('active');
 
+					var $code = $(this).parent().find('.code');
+					var $root = $(this).closest('.shortcode-js');
+
 					if ($(this).hasClass('active')) {
 						$(this).removeClass('active');
-						$(this).parent().find('.code').stop(true).fadeOut();
+						$code.stop(true).fadeOut();
 					} else {
 						$(this).addClass('active');
-						$(this).parent().find('.code').stop(true).fadeIn();
+						$code.css('max-height', $root.height() - 118);
+						$code.css('height', 'calc(100vh - 118px)');
+						$code.stop(true).fadeIn();
 					}
+				});
+
+				$('.sidebar .carret a, toggle-editor').on('click', function(e) {
+					e.preventDefault();
+					$('body').toggleClass('editor-active');
+				});
+
+				if (window.innerWidth < 960) {
+					$('body').removeClass('editor-active');
+				}
+			});
+		</script>
+
+		<!--
+		========================================================================
+
+		========================================================================
+		-->
+		<script type="text/javascript">
+			$(document).ready(function(){
+				shortcodes.execute($('#editor .ql-editor').clone(), function(){
+					console.log("Fuck yeah!");
 				});
 			});
 		</script>
+
+
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/prism.min.js"></script>
     </body>
 </html>
