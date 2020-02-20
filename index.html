@@ -19,16 +19,8 @@
                 color: #1d1d1d;
                 padding: 0px;
                 margin: 0px;
-				overflow-x: hidden;
-            }
-
-            body main {
-                transition: all 250ms ease-in-out;
-                filter: blur(0px);
-            }
-
-            body.modally-open main {
-                filter: blur(5px);
+				width: 100%;
+				height: 100%;
             }
 
             .monospace {
@@ -44,6 +36,14 @@
                 display: table-cell;
                 vertical-align: middle;
             }
+
+			.container {
+				width: 100%;
+				height: 100%;
+				overflow-x: hidden;
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
+			}
 
 			.clearfix:after {
 			   content: " "; /* Older browser do not support empty content */
@@ -73,8 +73,10 @@
             }
 
             .hero .table .cell {
-                padding-top: 40px;
-                padding-bottom: 40px;
+                padding-top: 60px;
+                padding-bottom: 60px;
+				padding-left: 16px;
+				padding-right: 16px;
                 text-align: center;
             }
 
@@ -236,6 +238,7 @@
 				background: white;
 				max-height: calc(100vh - 118px);
 				overflow: auto;
+				-webkit-overflow-scrolling: touch;
 				color: black;
 				box-sizing: border-box;
 				padding: 16px;
@@ -320,6 +323,10 @@
 			}
 
             @media screen and (max-width: 959px) {
+				.hero .table {
+					min-height: 500px;
+				}
+
 				.center {
 					padding-left: 16px;
 					padding-right: 16px;
@@ -384,7 +391,7 @@
 				max-width: 500px;
 				background: white;
 				width: calc(100% - 40px);
-				height: 100vh;
+				height: 100%;
 				top: 0px;
 				left: 0px;
 				transition: all 250ms ease-in-out;
@@ -392,7 +399,7 @@
 			}
 
 			.sidebar #editor {
-				height: 100vh;
+				height: 100%;
 			}
 
 			.sidebar #editor .editor {
