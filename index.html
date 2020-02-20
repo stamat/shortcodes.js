@@ -488,6 +488,10 @@
 			section.carousel .carousel-item {
 				padding-bottom: 10px;
 			}
+
+			.slick-dots li:only-child {
+				display: none;
+			}
         </style>
 
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -511,22 +515,18 @@
 						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
 						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
 						<p>[carousel]
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 1</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 2</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 3</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 4</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
+						<p><img src="https://imgur.com/6v3awSm.png" /></p>
+						<h1>1. Prepare</h1>
+						<p>Initializing is straightforward, load the shortcodes.js script together with jQuery as the only dependencie. Create a new Shortcodes object, which will be used to register the templates and initialize the rendering.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js/blob/master/README.md">View README</a></p>
+						<p><img src="https://imgur.com/2dTDpFg.png" /></p>
+						<h1>2. Ready</h1>
+						<p>Write and style your templates in HTML/CSS and register your shortcodes with binding descriptors which will provide the script with enough data on how to interpret the DOM sequences and bind the data to the template.</p>
+						<p><a href="#view-code" target="_action">View example code</a></p>
+						<p><img src="https://imgur.com/0AtbzI5.png" /></p>
+						<h1>3. Stack</h1>
+						<p>It's super simple for the end user. Just add any of the registered shortcodes as a simple text before a sequence of content and voilá - shortcodes.js will build an amazing layout out of "thin air". It's just like magic.</p>
+						<p><a href="#toggle-editor" target="_action">Try the editor</a></p>
 					</div>
 				</div>
 				<div class="carret">
@@ -798,7 +798,7 @@
 							<img class="spacer" src="https://imgur.com/YLLYqYt.png" />
 						</div>
 					</div>
-					<h3 class="title title-landing"></h3>
+					<h2 class="title title-landing"></h2>
 					<div class="text text-landing"></div>
 					<div class="button-wrap link-landing"></div>
 				</div>
@@ -813,6 +813,7 @@
 					item_template: '.carousel-item',
 					item_anchor: '.slides-landing',
 					callback: function($template) {
+						$('section.carousel').first().attr('id', 'main');
 						$template.find('.slides').not('.slick-initialized').slick({
 							slidesToShow: 3,
   							slidesToScroll: 1,
@@ -928,6 +929,10 @@
 				$('.sidebar .carret a, toggle-editor').on('click', function(e) {
 					e.preventDefault();
 					$('body').toggleClass('editor-active');
+
+					setTimeout(function(){
+						$(window).trigger('resize');
+					}, 250);
 				});
 
 				if (window.innerWidth < 960) {
