@@ -339,9 +339,28 @@
 				margin-top: 60px;
 			}
 
+			blockquote {
+				font-size: 24px;
+				font-weight: 300;
+				line-height: 32px;
+				letter-spacing: 0.5px;
+				margin-top: 30px;
+				margin-bottom: 30px;
+			}
+
             @media screen and (max-width: 959px) {
 				.hero .table {
 					min-height: 500px;
+				}
+
+				blockquote {
+					font-size: 20px;
+					font-weight: 300;
+					line-height: 28px;
+					letter-spacing: 0.3px;
+
+					margin-top: 20px;
+					margin-bottom: 20px;
 				}
 
 				.hero p {
@@ -551,7 +570,7 @@
 						<p>[hero]</p>
 						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
 						<h1>[shortcodes.js]</h1>
-						<h2>JavaScript Front-end Shortcode Engine.</h2>
+						<h2>JavaScript Front-end Shortcode Engine</h2>
 						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
 						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
 						<p>[carousel]</p>
@@ -568,29 +587,25 @@
 						<p>It's super simple for the end user. Just add any of the registered shortcodes as a simple text before a sequence of content and voilá - shortcodes.js will build an amazing layout out of "thin air". It's just like magic.</p>
 						<p><a href="#toggle-editor" target="_action">Try the editor</a></p>
 						<p>[text]</p>
-						<h1>Why?</h1>
+						<h2>Task</h2>
+						<p><strong>Creating beatuiful, if needed complex, layouts</strong> in simple enviroments like Shopify or Tumblr, from WYSIWYG editor output only. All that on front-end without creating a thirdparty hosted app, while also making it easy for the end user.</p>
+						<p>&nbsp;</p>
+						<h2>Why?</h2>
+						<p>Shortcodes are a popular way to insert data or layouts provided by third party plugins in Wordpress from it's PHP based back-end. Why would you need those on the front-end?</p>
+						<blockquote>First of all, why not?</blockquote>
+						<p>Second of all, if you have a limited back-end but you can store JS in your theme - like for instance Shopify, where you would usualy need a thirdparty plugin to manage metadata and it's data is usualy stored elsewhere to display layouts. Why not leverage the Shopify's cache and use the data from it's product/page/article content to fill the layouts? Or on Tumblr? Why not?</p>
+						<blockquote>This whole page is built with shortcode.js, with no backend at all. Give the editor on the side a try, or see how the shortcodes are declared by clicking <strong>"Show Code"</strong> on each of it's layout sections.</blockquote>
+						<p>Save on back-end rendering resources and let the overpowered visitor clients do all the work, while having better SEO and easier maintainance. It's even easy for the content maintainers - content is easily exported and imported, since it's local, without any additional fuss. It's even easier and more straightforward then custom Gutenberg or Elementor modules.</p>
+						<p>&nbsp;</p>
+						<h2>Usage (Developer Perspective)</h2>
 						<p><pre class="line-numbers">
-<code class="language-javascript">&#x3C;section class=&#x22;carousel template&#x22;&#x3E;
-&#x9;&#x3C;div class=&#x22;center above&#x22;&#x3E;
-&#x9;&#x9;&#x3C;div class=&#x22;slides slides-landing&#x22;&#x3E;
-
-&#x9;&#x9;&#x3C;/div&#x3E;
-&#x9;&#x3C;/div&#x3E;
-&#x3C;/section&#x3E;
-
-&#x3C;div class=&#x22;carousel-item template&#x22;&#x3E;
-&#x9;&#x3C;div class=&#x22;inner&#x22;&#x3E;
-&#x9;&#x9;&#x3C;div class=&#x22;image-wrap&#x22;&#x3E;
-&#x9;&#x9;&#x9;&#x3C;div class=&#x22;image image-landing&#x22;&#x3E;
-&#x9;&#x9;&#x9;&#x9;&#x3C;img class=&#x22;spacer&#x22; src=&#x22;https://imgur.com/YLLYqYt.png&#x22; /&#x3E;
-&#x9;&#x9;&#x9;&#x3C;/div&#x3E;
-&#x9;&#x9;&#x3C;/div&#x3E;
-&#x9;&#x9;&#x3C;h3 class=&#x22;title title-landing&#x22;&#x3E;&#x3C;/h3&#x3E;
-&#x9;&#x9;&#x3C;div class=&#x22;text text-landing&#x22;&#x3E;&#x3C;/div&#x3E;
-&#x9;&#x9;&#x3C;div class=&#x22;button-wrap link-landing&#x22;&#x3E;&#x3C;/div&#x3E;
-&#x9;&#x3C;/div&#x3E;
-&#x3C;/div&#x3E;</code>
+<code class="language-javascript">&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;path/to/shortcodes.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22;&#x3E;
+&#x9;var shortcodes = new Shortcodes(/* options */);
+&#x3C;/script&#x3E;</code>
 						</pre></p>
+						<h2>Usage (End User Perspective)</h2>
+
 					</div>
 				</div>
 				<div class="carret">
@@ -978,9 +993,10 @@
 							<div class="column">
 								<h3>HTML Template</h3>
 								<pre class="line-numbers">
-									<code class="language-html">
-
-									</code>
+									<code class="language-html">&#x3C;section class=&#x22;text template&#x22;&#x3E;
+&#x9;&#x3C;div class=&#x22;text-landing center p656&#x22;&#x3E;
+&#x9;&#x3C;/div&#x3E;
+&#x3C;/section&#x3E;</code>
 								</pre>
 							</div>
 							<div class="column">
