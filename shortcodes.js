@@ -140,10 +140,14 @@ Shortcodes.prototype.parseDOM = function($elem, one) {
  	for (var i = 0; i < children.length; i++) {
  		var $child = $(children[i]);
 
- 		var text = $child.text().toLowerCase().trim();
+		var match = null;
 
- 		var match = re.exec(text);
- 		re.lastIndex = 0; //regex needs a reset in for loops, I always forget this
+		if (!($child.is('pre') || $child.find('pre').length)) { //only if it's not "pre" element
+			var text = $child.text().toLowerCase().trim();
+
+	 		var match = re.exec(text);
+	 		re.lastIndex = 0; //regex needs a reset in for loops, I always forget this
+		}
 
  		if (match && match.length > 1) {
 
@@ -428,7 +432,7 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 		&& props.bind_property === 'background-image') {
 		extract  = 'url(' + extract + ')';
 	} else if (typeof props.bind_fn === 'function') {
-		props.bind_fn(extract, $dest, props, descriptor); //execute custom bind function
+		props.bind_fn(extract, $dest, props, descriptor, num); //execute custom bind function
 		return;
 	}
 
@@ -498,7 +502,7 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 
 			var $dest = descriptor.hasOwnProperty('template') ? $template.find(descriptor.item_anchor) : $(descriptor.anchor);
 			if (typeof descriptor.bind_fn === 'function') {
-				descriptor.bind_fn($item_template, $dest, descriptor, parsed_attrs);
+				descriptor.bind_fn($item_template, $dest, descriptor, parsed_attrs, i);
 			} else {
 				$dest[descriptor.bind_fn]($item_template);
 			}

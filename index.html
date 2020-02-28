@@ -19,17 +19,16 @@
                 color: #1d1d1d;
                 padding: 0px;
                 margin: 0px;
-				overflow-x: hidden;
+				width: 100%;
+				height: 100%;
             }
 
-            body main {
-                transition: all 250ms ease-in-out;
-                filter: blur(0px);
-            }
-
-            body.modally-open main {
-                filter: blur(5px);
-            }
+			p {
+				font-size: 16px;
+				line-height: 22px;
+				margin-bottom: 22px;
+				letter-spacing: 0.2px;
+			}
 
             .monospace {
                 font-family: 'IBM Plex Mono', monospace;
@@ -44,6 +43,14 @@
                 display: table-cell;
                 vertical-align: middle;
             }
+
+			.container {
+				width: 100%;
+				height: 100%;
+				overflow-x: hidden;
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
+			}
 
 			.clearfix:after {
 			   content: " "; /* Older browser do not support empty content */
@@ -66,6 +73,7 @@
             .hero p {
                 font-size: 18px;
                 letter-spacing: 0.5px;
+				line-height: 24px;
             }
 
             .hero .table {
@@ -73,8 +81,8 @@
             }
 
             .hero .table .cell {
-                padding-top: 40px;
-                padding-bottom: 40px;
+                padding-top: 60px;
+                padding-bottom: 60px;
                 text-align: center;
             }
 
@@ -236,6 +244,7 @@
 				background: white;
 				max-height: calc(100vh - 118px);
 				overflow: auto;
+				-webkit-overflow-scrolling: touch;
 				color: black;
 				box-sizing: border-box;
 				padding: 16px;
@@ -319,7 +328,52 @@
 				box-sizing: content-box;
 			}
 
+			section.carousel, section.text {
+				position: relative;
+				padding-top: 60px;
+				padding-bottom: 60px;
+			}
+
+			footer {
+				background: #595959;
+				margin-top: 60px;
+			}
+
+			blockquote {
+				font-size: 24px;
+				font-weight: 300;
+				line-height: 32px;
+				letter-spacing: 0.5px;
+				margin-top: 30px;
+				margin-bottom: 30px;
+			}
+
             @media screen and (max-width: 959px) {
+				.hero .table {
+					min-height: 500px;
+				}
+
+				blockquote {
+					font-size: 20px;
+					font-weight: 300;
+					line-height: 28px;
+					letter-spacing: 0.3px;
+
+					margin-top: 20px;
+					margin-bottom: 20px;
+				}
+
+				.hero p {
+					font-size: 16px;
+					line-height: 20px;
+				}
+
+				p {
+					font-size: 14px;
+					line-height: 20px;
+					margin-bottom: 20px;
+				}
+
 				.center {
 					padding-left: 16px;
 					padding-right: 16px;
@@ -342,9 +396,13 @@
                     line-height: 44px;
                 }
 
-				section.carousel {
+				section.carousel, section.text {
+					padding-top: 30px;
+					padding-bottom: 30px;
+				}
+
+				footer {
 					margin-top: 30px;
-					margin-bottom: 30px;
 				}
             }
 
@@ -384,7 +442,7 @@
 				max-width: 500px;
 				background: white;
 				width: calc(100% - 40px);
-				height: 100vh;
+				height: 100%;
 				top: 0px;
 				left: 0px;
 				transition: all 250ms ease-in-out;
@@ -392,7 +450,7 @@
 			}
 
 			.sidebar #editor {
-				height: 100vh;
+				height: 100%;
 			}
 
 			.sidebar #editor .editor {
@@ -449,12 +507,6 @@
 				visibility: hidden;
 			}
 
-			section.carousel {
-				position: relative;
-				margin-top: 60px;
-				margin-bottom: 60px;
-			}
-
 			section.carousel .carousel-item {
 				padding-left: 8px;
 				padding-right: 8px;
@@ -483,12 +535,28 @@
 			section.carousel .carousel-item {
 				padding-bottom: 10px;
 			}
+
+			.slick-dots li:only-child {
+				display: none;
+			}
+
+			section.text .text-landing > p > img {
+				width: 100%;
+			}
+
+			section.text .text-landing p {
+				color: #595959;
+			}
         </style>
 
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/inobounce/0.2.0/inobounce.min.js"></script>
 		<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<!--
+		========================================================================
+			INITIALIZE SHORTCODES
+		========================================================================
+		-->
 		<script type="text/javascript" src="shortcodes.js"></script>
 		<script type="text/javascript">
 			var shortcodes = new Shortcodes();
@@ -502,26 +570,42 @@
 						<p>[hero]</p>
 						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
 						<h1>[shortcodes.js]</h1>
-						<h2>JavaScript Front-end Shortcode Engine.</h2>
+						<h2>JavaScript Front-end Shortcode Engine</h2>
 						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
 						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p>[carousel]
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 1</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 2</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 3</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
-						<p><img src="https://i.imgur.com/TKg3lCb.jpg" /></p>
-						<h1>Slide 4</h1>
-						<p>Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.</p>
-						<p><a href="https://github.com/stamat/shortcodes.js">View on GitHub</a></p>
+						<p>[carousel]</p>
+						<p><img src="https://imgur.com/6v3awSm.png" /></p>
+						<h1>1. Prepare</h1>
+						<p>Initializing is straightforward, load the shortcodes.js script together with jQuery as the only dependencie. Create a new Shortcodes object, which will be used to register the templates and initialize the rendering.</p>
+						<p><a href="https://github.com/stamat/shortcodes.js/blob/master/README.md">View README</a></p>
+						<p><img src="https://imgur.com/2dTDpFg.png" /></p>
+						<h1>2. Ready</h1>
+						<p>Write and style your templates in HTML/CSS and register your shortcodes with binding descriptors which will provide the script with enough data on how to interpret the DOM sequences and bind the data to the template.</p>
+						<p><a href="#view-code" target="_action">View example code</a></p>
+						<p><img src="https://imgur.com/0AtbzI5.png" /></p>
+						<h1>3. Stack</h1>
+						<p>It's super simple for the end user. Just add any of the registered shortcodes as a simple text before a sequence of content and voilá - shortcodes.js will build an amazing layout out of "thin air". It's just like magic.</p>
+						<p><a href="#toggle-editor" target="_action">Try the editor</a></p>
+						<p>[text]</p>
+						<h2>Task</h2>
+						<p><strong>Creating beatuiful, if needed complex, layouts</strong> in simple enviroments like Shopify or Tumblr, from WYSIWYG editor output only. All that on front-end without creating a thirdparty hosted app, while also making it easy for the end user.</p>
+						<p>&nbsp;</p>
+						<h2>Why?</h2>
+						<p>Shortcodes are a popular way to insert data or layouts provided by third party plugins in Wordpress from it's PHP based back-end. Why would you need those on the front-end?</p>
+						<blockquote>First of all, why not?</blockquote>
+						<p>Second of all, if you have a limited back-end but you can store JS in your theme - like for instance Shopify, where you would usualy need a thirdparty plugin to manage metadata and it's data is usualy stored elsewhere to display layouts. Why not leverage the Shopify's cache and use the data from it's product/page/article content to fill the layouts? Or on Tumblr? Why not?</p>
+						<blockquote>This whole page is built with shortcode.js, with no backend at all. Give the editor on the side a try, or see how the shortcodes are declared by clicking <strong>"Show Code"</strong> on each of it's layout sections.</blockquote>
+						<p>Save on back-end rendering resources and let the overpowered visitor clients do all the work, while having better SEO and easier maintainance. It's even easy for the content maintainers - content is easily exported and imported, since it's local, without any additional fuss. It's even easier and more straightforward then custom Gutenberg or Elementor modules.</p>
+						<p>&nbsp;</p>
+						<h2>Usage (Developer Perspective)</h2>
+						<p><pre class="line-numbers">
+<code class="language-javascript">&#x3C;script type=&#x22;text/javascript&#x22; src=&#x22;path/to/shortcodes.js&#x22;&#x3E;&#x3C;/script&#x3E;
+&#x3C;script type=&#x22;text/javascript&#x22;&#x3E;
+&#x9;var shortcodes = new Shortcodes(/* options */);
+&#x3C;/script&#x3E;</code>
+						</pre></p>
+						<h2>Usage (End User Perspective)</h2>
+
 					</div>
 				</div>
 				<div class="carret">
@@ -539,6 +623,12 @@
             </main>
         </div>
 		<div id="templates" class="templates" style="display: none">
+
+			<!--
+			____________________________________________________________________
+				[hero]
+			____________________________________________________________________
+			-->
 			<section class="hero template image-landing">
 				<div class="table">
 					<div class="cell">
@@ -623,9 +713,9 @@
 		}
 	}
 });</code>
+										</pre>
 									</div>
 								</div>
-								</pre>
 							</div>
 						</div>
 						<div class="github-buttons">
@@ -639,8 +729,14 @@
 					anchor: '.shortcode-landing',
 					bind_fn: 'append',
 					template: 'section.hero',
-					callback: function() {
-						console.log(arguments);
+					callback: function($template) {
+						$template.find('.down').on('click', function(e) {
+							e.preventDefault();
+
+							$('.container').animate({
+						        scrollTop: $("#main").offset().top
+						    }, 500);
+						});
 					},
 					elements: {
 						img: {
@@ -686,6 +782,12 @@
 				});
 			</script>
 
+
+			<!--
+			____________________________________________________________________
+				[carousel]
+			____________________________________________________________________
+			-->
 			<section class="carousel template">
 		        <div class="center above">
 		            <div class="slides slides-landing">
@@ -759,8 +861,14 @@
 			anchor: '.link-landing',
 			extract_fn: 'attr',
 			extract_attr: ['href', 'title', 'html'],
-			bind_fn: function(extract, $dest, props) {
-				$dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button">'+extract[2]+'</a>');
+			bind_fn: function(extract, $dest, props, descriptor, num) {
+				if (num === 1) {
+					$dest.find(props.anchor).append('<a href="#view-code" target="_action" class="button small green">'+extract[2]+'</a>');
+				} else if (num === 2) {
+					$dest.find(props.anchor).append('<a href="#toggle-editor" target="_action" class="button small green">'+extract[2]+'</a>');
+				} else {
+					$dest.find(props.anchor).append('<a href="'+extract[0]+'" target="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+				}
 			},
 			anchor_element: 'item'
 		},
@@ -779,8 +887,6 @@
 		}
 	}
 });</code>
-							</div>
-						</div>
 						</pre>
 					</div>
 				</div>
@@ -793,7 +899,7 @@
 							<img class="spacer" src="https://imgur.com/YLLYqYt.png" />
 						</div>
 					</div>
-					<h3 class="title title-landing"></h3>
+					<h2 class="title title-landing"></h2>
 					<div class="text text-landing"></div>
 					<div class="button-wrap link-landing"></div>
 				</div>
@@ -808,6 +914,7 @@
 					item_template: '.carousel-item',
 					item_anchor: '.slides-landing',
 					callback: function($template) {
+						$('section.carousel').first().attr('id', 'main');
 						$template.find('.slides').not('.slick-initialized').slick({
 							slidesToShow: 3,
   							slidesToScroll: 1,
@@ -839,9 +946,175 @@
 							count: 'many',
 							anchor: '.link-landing',
 							extract_fn: 'attr',
-							extract_attr: ['href', 'title', 'html'],
-							bind_fn: function(extract, $dest, props) {
-								$dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+							extract_attr: ['href', 'target', 'html'],
+							bind_fn: function(extract, $dest, props, descriptor, num) {
+								if (num === 1) {
+									$dest.find(props.anchor).append('<a href="#view-code" target="_action" class="button small green">'+extract[2]+'</a>');
+								} else if (num === 2) {
+									$dest.find(props.anchor).append('<a href="#toggle-editor" target="_action" class="button small green">'+extract[2]+'</a>');
+								} else {
+									$dest.find(props.anchor).append('<a href="'+extract[0]+'" target="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+								}
+							},
+							anchor_element: 'item'
+						},
+						h1: {
+							count: 'many',
+							bind_fn: 'html',
+							anchor: '.title-landing',
+							extract_fn: 'html',
+							anchor_element: 'item'
+						},
+						rest: {
+							anchor: '.text-landing',
+							bind_fn: 'append',
+							extract_fn: 'self',
+							anchor_element: 'item'
+						}
+					}
+				});
+			</script>
+
+			<!--
+			____________________________________________________________________
+				[text]
+			____________________________________________________________________
+			-->
+			<section class="text template">
+				<div class="text-landing center p656">
+				</div>
+				<div class="code-wrap">
+					<a href="#" class="code-button black">
+						<img src="https://i.imgur.com/P197gya.png" /><span class="label"><span class="show">show</span><span class="hide">hide</span> code</span>
+					</a>
+					<div class="code">
+						<h2>[text]</h2>
+						<div class="columns clearfix">
+							<div class="column">
+								<h3>HTML Template</h3>
+								<pre class="line-numbers">
+									<code class="language-html">&#x3C;section class=&#x22;text template&#x22;&#x3E;
+&#x9;&#x3C;div class=&#x22;text-landing center p656&#x22;&#x3E;
+&#x9;&#x3C;/div&#x3E;
+&#x3C;/section&#x3E;</code>
+								</pre>
+							</div>
+							<div class="column">
+								<h3>JavaScript Descriptor</h3>
+								<pre class="line-numbers">
+<code class="language-javascript">shortcodes.register('text', {
+	anchor: '.shortcode-landing',
+	bind_fn: 'append',
+	template: 'section.text',
+	elements: {
+		rest: {
+			anchor: '.text-landing',
+			bind_fn: 'append',
+			extract_fn: 'self',
+			anchor_element: 'template'
+		}
+	}
+});</code>
+							</div>
+						</div>
+						</pre>
+					</div>
+				</div>
+			</section>
+			<script type="text/javascript">
+				shortcodes.register('text', {
+					anchor: '.shortcode-landing',
+					bind_fn: 'append',
+					template: 'section.text',
+					callback: function($template) {
+						$template.find('.text-landing pre').each(function() {
+							$(this).html( '<code class="language-html">' + $(this).html() + '</code>');
+						});
+					},
+					elements: {
+						rest: {
+							anchor: '.text-landing',
+							bind_fn: 'append',
+							extract_fn: 'self',
+							anchor_element: 'template'
+						}
+					}
+				});
+			</script>
+
+			<!--
+			____________________________________________________________________
+				[footer]
+			____________________________________________________________________
+			-->
+			<footer class="footer template">
+				<div class="center">
+				</div>
+				<div class="code-wrap">
+					<a href="#" class="code-button black">
+						<img src="https://i.imgur.com/P197gya.png" /><span class="label"><span class="show">show</span><span class="hide">hide</span> code</span>
+					</a>
+					<div class="code">
+						<h2>[text]</h2>
+						<div class="columns clearfix">
+							<div class="column">
+								<h3>HTML Template</h3>
+								<pre class="line-numbers">
+									<code class="language-html">
+
+									</code>
+								</pre>
+							</div>
+							<div class="column">
+								<h3>JavaScript Descriptor</h3>
+								<pre class="line-numbers">
+<code class="language-javascript">shortcodes.register('text', {
+	anchor: '.shortcode-landing',
+	bind_fn: 'append',
+	template: 'section.text',
+	elements: {
+		rest: {
+			anchor: '.text-landing',
+			bind_fn: 'append',
+			extract_fn: 'self',
+			anchor_element: 'template'
+		}
+	}
+});</code>
+							</div>
+						</div>
+						</pre>
+					</div>
+				</div>
+			</footer>
+			<script type="text/javascript">
+				shortcodes.register('footer', {
+					anchor: '.shortcode-landing',
+					bind_fn: 'append',
+					template: 'footer',
+					elements: {
+						img: {
+							count: 'many',
+							bind_fn: 'css',
+							bind_property: 'background-image',
+							extract_fn: 'attr',
+							extract_attr: 'src',
+							anchor: '.image-landing',
+							anchor_element: 'item'
+						},
+						a: {
+							count: 'many',
+							anchor: '.link-landing',
+							extract_fn: 'attr',
+							extract_attr: ['href', 'target', 'html'],
+							bind_fn: function(extract, $dest, props, descriptor, num) {
+								if (num === 1) {
+									$dest.find(props.anchor).append('<a href="#view-code" target="_action" class="button small green">'+extract[2]+'</a>');
+								} else if (num === 2) {
+									$dest.find(props.anchor).append('<a href="#toggle-editor" target="_action" class="button small green">'+extract[2]+'</a>');
+								} else {
+									$dest.find(props.anchor).append('<a href="'+extract[0]+'" target="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+								}
 							},
 							anchor_element: 'item'
 						},
@@ -875,7 +1148,7 @@
 				[{ 'list': 'ordered'}, { 'list': 'bullet' }],
 				[{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
 				[{'align': []}],
-
+				['code-block'],
 				['clean']                                         // remove formatting button
 			];
 			var options = {
@@ -892,54 +1165,71 @@
 				$('.code-button.active').removeClass('active');
 
 				shortcodes.reinit($('#editor .ql-editor').clone(), function(){
-					console.log("Fuck yeah!");
+					// https://www.youtube.com/watch?v=qetW6R9Jxs4
 				});
 			});
         </script>
 
 		<!-- initialize other demo-only actions -->
 		<script type="text/javascript">
-			$(document).ready(function(){
-				$('body').on('click', '.code-button', function(e) {
-					e.preventDefault();
+			$(document).ready(function() {
+				function codeButton(elem) {
+					$('.code-button.active').not(elem).parent().find('.code').stop(true).fadeOut();
+					$('.code-button.active').not(elem).removeClass('active');
 
-					$('.code-button.active').not(this).parent().find('.code').stop(true).fadeOut();
-					$('.code-button.active').not(this).removeClass('active');
+					var $code = $(elem).parent().find('.code');
+					var $root = $(elem).closest('.shortcode-js');
 
-					var $code = $(this).parent().find('.code');
-					var $root = $(this).closest('.shortcode-js');
-
-					if ($(this).hasClass('active')) {
-						$(this).removeClass('active');
+					if ($(elem).hasClass('active')) {
+						$(elem).removeClass('active');
 						$code.stop(true).fadeOut();
 					} else {
-						$(this).addClass('active');
+						$(elem).addClass('active');
 						$code.css('max-height', $root.height() - 118);
 						$code.css('height', 'calc(100vh - 118px)');
 						$code.stop(true).fadeIn();
 					}
+				}
+				$('body').on('click', '.code-button', function(e) {
+					e.preventDefault();
+					codeButton(this);
 				});
 
-				$('.sidebar .carret a, toggle-editor').on('click', function(e) {
+				$('.sidebar .carret a, .toggle-editor').on('click', function(e) {
 					e.preventDefault();
 					$('body').toggleClass('editor-active');
+
+					setTimeout(function(){
+						$(window).trigger('resize');
+					}, 250);
 				});
 
 				if (window.innerWidth < 960) {
 					$('body').removeClass('editor-active');
 				}
+
+				$('body').on('click', 'a[target="_action"]', function(e) {
+					e.preventDefault();
+
+					if ($(this).attr('href') === '#view-code') {
+						codeButton($(this).closest('.shortcode-js').find('.code-button'));
+					} else if ($(this).attr('href') === '#toggle-editor') {
+						$('.sidebar .carret a').trigger('click');
+					}
+				});
 			});
 		</script>
 
 		<!--
 		========================================================================
-
+			EXECUTE SHORTCODES
 		========================================================================
 		-->
 		<script type="text/javascript">
 			$(document).ready(function(){
-				shortcodes.execute($('#editor .ql-editor').clone(), function(){
-					console.log("Fuck yeah!");
+				shortcodes.execute($('#editor .ql-editor').clone(), function() {
+					// https://www.youtube.com/watch?v=qetW6R9Jxs4
+					console.log(arguments);
 				});
 			});
 		</script>
