@@ -1,6 +1,8 @@
 /** shortcodes.js v1.0.3 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
 
 
+//TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
+
 //TODO: decide if jQuery is really necessary
 
 function Shortcodes(options) {
