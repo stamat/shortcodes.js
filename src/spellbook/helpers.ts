@@ -58,7 +58,6 @@ function clone(o: any) {
  * Detaches an element from the DOM and returns it
  * 
  * @param {HTMLElement} element The element to detach
- * @example
  */
 function detachElement(element: HTMLElement) {
   if (element && element.parentNode) {

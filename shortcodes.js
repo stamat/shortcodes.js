@@ -351,7 +351,6 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
   if (descriptor.hasOwnProperty("template")) {
     $template = this.getTemplate(descriptor.template);
   }
-  console.log(val);
   var sorted = this.sortDOM(descriptor, val);
   if (descriptor.hasOwnProperty("item_template")) {
     for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
