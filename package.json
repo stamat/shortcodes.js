@@ -1,0 +1,8 @@
+{
+  "name": "shortcodes.js",
+  "description": "JavaScript Front-end Shortcode Engine",
+  "license": "MIT",
+  "dependencies": {
+    "poops": "^1.0.7"
+  }
+}
