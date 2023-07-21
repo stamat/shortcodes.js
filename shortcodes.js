@@ -22,10 +22,10 @@ function _cloneArray(a) {
 }
 function clone(o) {
   let res2 = null;
-  if (typeof o === "object" && o !== null) {
-    res2 = _cloneObject(o);
-  } else if (Array.isArray(o)) {
+  if (Array.isArray(o)) {
     res2 = _cloneArray(o);
+  } else if (typeof o === "object" && o !== null) {
+    res2 = _cloneObject(o);
   } else {
     res2 = o;
   }
@@ -77,6 +77,12 @@ var Shortcodes = class {
     const replacement = `${pref}_${width}x${suf}`;
     return src.replace(re, replacement);
   }
+  /**
+   * Finds elements between the shortcodes makes a map of all shortcodes and their containing elements
+   * 
+   * @param {HTMLElement|NodeList} elem - Entry element to parse and find shortcodes in
+   * @param {string} one - If specified, returns only the shortcode map for the specified shortcode
+   */
   parseDOM(elem, one) {
     const map = {};
     let last_section = null;
@@ -272,19 +278,19 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
       }
     } else {
       extract = [];
-      for (var i = 0; i < props.extract_attr.length; i++) {
-        if (props.extract_attr[i] === "html") {
+      for (var j = 0; j < props.extract_attr.length; j++) {
+        if (props.extract_attr[j] === "html") {
           extract.push($item.html());
           continue;
         }
-        if ($item.is("img") && props.extract_attr[i] === "src") {
+        if ($item.is("img") && props.extract_attr[j] === "src") {
           var src = $item.attr("src");
           if (src && this.shopify_img_re.test(src)) {
             extract.push(src.replace(this.shopify_img_re, "$1$3"));
             continue;
           }
         }
-        var attr = props.extract_attr[i];
+        var attr = props.extract_attr[j];
         extract.push($item[props.extract_fn](attr));
       }
     }
@@ -348,6 +354,7 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
   if (descriptor.hasOwnProperty("template")) {
     $template = this.getTemplate(descriptor.template);
   }
+  console.log(val);
   var sorted = this.sortDOM(descriptor, val);
   if (descriptor.hasOwnProperty("item_template")) {
     for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {

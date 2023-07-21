@@ -41,10 +41,15 @@ class Shortcodes {
 		return src.replace(re, replacement)
 	}
 
+	/**
+	 * Finds elements between the shortcodes makes a map of all shortcodes and their containing elements
+	 * 
+	 * @param {HTMLElement|NodeList} elem - Entry element to parse and find shortcodes in
+	 * @param {string} one - If specified, returns only the shortcode map for the specified shortcode
+	 */
 	parseDOM(elem, one) {
 		const map = {}
 		let last_section = null
-
 		const children = elem instanceof NodeList ? elem : elem.children
 		
 		const re = /\[([\/a-z0-9\-_\s]+)\]/gi // regex for detecting shortcodes
@@ -61,10 +66,13 @@ class Shortcodes {
 				re.lastIndex = 0; //regex needs a reset in for loops, I always forget this
 			}
 
+			// when the shortcode is detected
 			if (match && match.length > 1) {
 
-				// detect closing tag, replace with /^\// regex of the shortcode
-				if (match[1].indexOf('/') === 0 && last_section && last_section.indexOf(match[1].replace(/^\//, '')) > -1) {
+				// detect closing tag and remove it
+				if (match[1].indexOf('/') === 0 
+					&& last_section 
+					&& last_section.indexOf(match[1].replace(/^\//, '')) > -1) { // if it's a closing tag of the current shortcode
 					last_section = null
 					child.remove()
 					continue
@@ -293,6 +301,7 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 
 //TODO: simplify with declarative programming
 Shortcodes.prototype.executeProperties = function($item, $dest, props, descriptor, num) {
+	//$item = $($item);
 	// Extract DOM attributes
 	if (props.extract_fn === 'attr') {
 		if (typeof props.extract_attr === 'string') {
@@ -305,20 +314,20 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 			}
 		} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
 			extract = [];
-			for (var i = 0; i < props.extract_attr.length; i++) {
-				if (props.extract_attr[i] === 'html') {
+			for (var j = 0; j < props.extract_attr.length; j++) {
+				if (props.extract_attr[j] === 'html') {
 					extract.push($item.html());
 					continue;
 				}
 
-				if ($item.is('img') && props.extract_attr[i] === 'src') {
+				if ($item.is('img') && props.extract_attr[j] === 'src') {
 					var src = $item.attr('src');
 					if (src && this.shopify_img_re.test(src)) {
 						extract.push(src.replace(this.shopify_img_re, '$1$3'));
 						continue;
 					}
 				}
-				var attr = props.extract_attr[i];
+				var attr = props.extract_attr[j];
 				extract.push($item[props.extract_fn](attr));
 			}
 		}
@@ -396,6 +405,8 @@ Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
 	if (descriptor.hasOwnProperty('template')) {
 		$template = this.getTemplate(descriptor.template);
 	}
+
+	console.log(val)
 
 	var sorted = this.sortDOM(descriptor, val);
 

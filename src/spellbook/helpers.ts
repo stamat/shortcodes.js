@@ -44,10 +44,10 @@ function _cloneArray(a: Array<any>) {
  */ 
 function clone(o: any) {
   let res: any = null
-  if(typeof o === 'object' && o !== null) {
-    res = _cloneObject(o)
-  } else if(Array.isArray(o)) {
+  if(Array.isArray(o)) {
     res = _cloneArray(o)
+  } else if(typeof o === 'object' && o !== null) {
+    res = _cloneObject(o)
   } else {
     res = o;
   }
