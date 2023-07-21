@@ -1,6 +1,11 @@
 /* shortcodes.js v1.0.0 | https://github.com/stamat/shortcodes.js | MIT License */
 
 // src/spellbook/helpers.ts
+function shallowMerge(target, source) {
+  for (const key in source) {
+    target[key] = source[key];
+  }
+}
 function _cloneObject(o) {
   let res2 = {};
   for (const i in o) {
@@ -26,92 +31,99 @@ function clone(o) {
   }
   return res2;
 }
+function detachElement(element) {
+  const parent = element.parentNode;
+  if (parent) {
+    const clonedElement = element.cloneNode(true);
+    parent.replaceChild(clonedElement, element);
+    return clonedElement;
+  }
+  return null;
+}
+function insertBeforeElement(targetElement, newElement) {
+  var _a;
+  (_a = targetElement.parentNode) == null ? void 0 : _a.insertBefore(newElement, targetElement);
+}
 
 // src/shortcodes.js
-function Shortcodes(options) {
-  this.descriptor_index = {};
-  this.exec_fns = {};
-  this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
-  this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
-  if (!options) {
-    options = {};
-  }
-  this.defaults = {
-    templates: "#templates",
-    template_class: "template",
-    self_anchor_class: "self-anchor",
-    placement_class_prefix: "shortcode-landing"
-  };
-  this.options = options;
-  for (var k in this.defaults) {
-    if (!this.options.hasOwnProperty(k)) {
-      this.options[k] = this.defaults[k];
+var Shortcodes = class {
+  constructor(options) {
+    this.descriptor_index = {};
+    this.exec_fns = {};
+    this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
+    this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
+    this.options = {
+      templates: "#templates",
+      template_class: "template",
+      self_anchor_class: "self-anchor",
+      placement_class_prefix: "shortcode-landing"
+    };
+    if (options) {
+      shallowMerge(this.options, options);
     }
   }
-}
-Shortcodes.prototype.shopifyImageLink = function(src, width) {
-  var pref = "$1";
-  var suf = "$2";
-  var re = this.shopify_img_replacer_re;
-  if (!re.test(src)) {
-    return src;
-  }
-  if (this.shopify_img_re.test(src)) {
-    suf = "$3";
-    re = this.shopify_img_re;
-  }
-  if (!width) {
-    width = 100;
-  }
-  var replacement = pref + "_" + width + "x" + suf;
-  return src.replace(re, replacement);
-};
-Shortcodes.prototype.parseDOM = function($elem, one) {
-  var map = {};
-  var last_section = null;
-  $elem = $($elem);
-  var children = $elem.length > 1 ? $elem : $($elem).children();
-  var re = /\[([\/a-z0-9\-_\s]+)\]/gi;
-  var shortcode_counter = 0;
-  for (var i = 0; i < children.length; i++) {
-    var $child = $(children[i]);
-    var match = null;
-    if (!($child.is("pre") || $child.find("pre").length)) {
-      var text = $child.text().toLowerCase().trim();
-      var match = re.exec(text);
-      re.lastIndex = 0;
+  shopifyImageLink(src, width) {
+    const pref = "$1";
+    let suf = "$2";
+    if (!width)
+      width = 100;
+    let re = this.shopify_img_replacer_re;
+    if (!re.test(src))
+      return src;
+    if (this.shopify_img_re.test(src)) {
+      suf = "$3";
+      re = this.shopify_img_re;
     }
-    if (match && match.length > 1) {
-      if (match[1].indexOf("/") === 0 && last_section && last_section.indexOf(match[1].replace(/^\//, "")) > -1) {
-        last_section = null;
-        $child.remove();
+    const replacement = `${pref}_${width}x${suf}`;
+    return src.replace(re, replacement);
+  }
+  parseDOM(elem, one) {
+    const map = {};
+    let last_section = null;
+    const children = elem instanceof NodeList ? elem : elem.children;
+    const re = /\[([\/a-z0-9\-_\s]+)\]/gi;
+    let shortcode_counter = 0;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      let match = null;
+      if (!(child instanceof HTMLPreElement || child.querySelector("pre"))) {
+        const text = child.textContent.toLowerCase().trim();
+        match = re.exec(text);
+        re.lastIndex = 0;
+      }
+      if (match && match.length > 1) {
+        if (match[1].indexOf("/") === 0 && last_section && last_section.indexOf(match[1].replace(/^\//, "")) > -1) {
+          last_section = null;
+          child.remove();
+          continue;
+        }
+        last_section = `${match[1]} sc${shortcode_counter}`;
+        const self_locator = document.createElement("div");
+        self_locator.className = `${this.options.self_anchor_class} shortcode-${last_section.split(/\s+/)[0]} sc${shortcode_counter}`;
+        if (!map.hasOwnProperty(last_section)) {
+          map[last_section] = [];
+          shortcode_counter++;
+        }
+        insertBeforeElement(child, self_locator);
+        map[last_section].push(self_locator);
+        child.remove();
         continue;
       }
-      last_section = match[1] + " sc" + shortcode_counter;
-      var $self_locator = $('<div class="' + this.options.self_anchor_class + " shortcode-" + last_section.split(/\s+/)[0] + " sc" + shortcode_counter + '" />');
-      if (!map.hasOwnProperty(last_section)) {
-        map[last_section] = [];
-        shortcode_counter++;
+      if (last_section) {
+        map[last_section].push(child);
+        detachElement(child);
       }
-      $child.before($self_locator);
-      map[last_section].push($self_locator);
-      $child.remove();
-      continue;
-    }
-    if (last_section) {
-      map[last_section].push($child);
-      $child.detach();
-    }
-    if (one && last_section !== one) {
-      if (map.hasOwnProperty(one)) {
-        return map[one];
+      if (one && last_section !== one) {
+        if (map.hasOwnProperty(one)) {
+          return map[one];
+        }
       }
     }
+    if (one && map.hasOwnProperty(one)) {
+      return map[one];
+    }
+    return map;
   }
-  if (one && map.hasOwnProperty(one)) {
-    return map[one];
-  }
-  return map;
 };
 Shortcodes.prototype.sortDOM = function(descriptor, val) {
   var re = /^\{([a-z0-9\-_\s]+)\}$/gi;
@@ -475,7 +487,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 };
 Shortcodes.prototype.execute = function($elem, callback) {
   $($elem).css("visibility", "hidden");
-  var shortcode_map = this.parseDOM($elem);
+  var shortcode_map = this.parseDOM($elem[0]);
   for (var k in shortcode_map) {
     var attrs = k.split(/\s+/gi);
     var fn_name = attrs.shift();
