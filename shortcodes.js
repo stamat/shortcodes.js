@@ -1,5 +1,32 @@
 /* shortcodes.js v1.0.0 | https://github.com/stamat/shortcodes.js | MIT License */
 
+// src/spellbook/helpers.ts
+function _cloneObject(o) {
+  let res2 = {};
+  for (const i in o) {
+    res2[i] = clone(o[i]);
+  }
+  return res2;
+}
+function _cloneArray(a) {
+  let res2 = [];
+  for (var i = 0; i < a.length; i++) {
+    res2[i] = clone(a[i]);
+  }
+  return res2;
+}
+function clone(o) {
+  let res2 = null;
+  if (typeof o === "object" && o !== null) {
+    res2 = _cloneObject(o);
+  } else if (Array.isArray(o)) {
+    res2 = _cloneArray(o);
+  } else {
+    res2 = o;
+  }
+  return res2;
+}
+
 // src/shortcodes.js
 function Shortcodes(options) {
   this.descriptor_index = {};
@@ -20,34 +47,6 @@ function Shortcodes(options) {
     if (!this.options.hasOwnProperty(k)) {
       this.options[k] = this.defaults[k];
     }
-  }
-  if (!window.hasOwnProperty("d0")) {
-    window.d0 = {};
-    window.d0.clone = function(o) {
-      let res2 = null;
-      if (typeof obj === "object" && obj !== null) {
-        res2 = window.d0._cloneObject(o);
-      } else if (Array.isArray(o)) {
-        res2 = window.d0._cloneArray(o);
-      } else {
-        res2 = o;
-      }
-      return res2;
-    };
-    window.d0._cloneObject = function(o) {
-      let res2 = {};
-      for (var i in o) {
-        res2[i] = window.d0.clone(o[i]);
-      }
-      return res2;
-    };
-    window.d0._cloneArray = function(a) {
-      let res2 = [];
-      for (var i = 0; i < a.length; i++) {
-        res2[i] = window.d0.clone(a[i]);
-      }
-      return res2;
-    };
   }
 }
 Shortcodes.prototype.shopifyImageLink = function(src, width) {
@@ -460,7 +459,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
   this.descriptor_index[shortcode_name] = descriptor;
   var self = this;
   this.exec_fns[shortcode_name] = function(k, attrs, val) {
-    var descriptor2 = window.d0.clone(self.descriptor_index[k]);
+    var descriptor2 = clone(self.descriptor_index[k]);
     var parsed_attrs = self.parseAttributes(descriptor2, attrs);
     if (descriptor2.hasOwnProperty("pre") && descriptor2.pre) {
       descriptor2.pre(descriptor2, attrs, val, parsed_attrs);

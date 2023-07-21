@@ -1,5 +1,4 @@
-/** shortcodes.js v1.0.3 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
-
+import { clone } from './spellbook/helpers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
 
@@ -29,40 +28,6 @@ function Shortcodes(options) {
 		if (!this.options.hasOwnProperty(k)) {
 			this.options[k] = this.defaults[k];
 		}
-	}
-
-	//Object deep clone from d0.js @stamat
-	if (!window.hasOwnProperty('d0')) {
-		window.d0 = {};
-
-		window.d0.clone = function(o) {
-			let res = null;
-			if(typeof obj === 'object' && obj !== null) {
-				res = window.d0._cloneObject(o);
-			} else if(Array.isArray(o)) {
-				res = window.d0._cloneArray(o);
-			} else {
-				res = o;
-			}
-			return res;
-		};
-
-
-		window.d0._cloneObject = function(o) {
-			let res = {};
-			for(var i in o) {
-				res[i] = window.d0.clone(o[i]);
-			}
-			return res;
-		};
-
-		window.d0._cloneArray = function(a) {
-			let res = [];
-			for(var i = 0; i < a.length; i++) {
-				res[i] = window.d0.clone(a[i]);
-			}
-			return res;
-		};
 	}
 }
 
@@ -593,7 +558,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 	var self = this;
 
 	this.exec_fns[shortcode_name] = function(k, attrs, val) {
-		var descriptor = window.d0.clone(self.descriptor_index[k]);
+		var descriptor = clone(self.descriptor_index[k]);
 
 		var parsed_attrs = self.parseAttributes(descriptor, attrs);
 
