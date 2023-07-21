@@ -31,12 +31,6 @@ function clone(o) {
   }
   return res2;
 }
-function detachElement(element) {
-  if (element && element.parentNode) {
-    element.parentNode.removeChild(element);
-  }
-  return element;
-}
 function insertBeforeElement(targetElement, newElement) {
   var _a;
   (_a = targetElement.parentNode) == null ? void 0 : _a.insertBefore(newElement, targetElement);
@@ -114,7 +108,6 @@ var Shortcodes = class {
       }
       if (last_section) {
         map[last_section].push(child);
-        detachElement(child);
       }
       if (one && last_section !== one) {
         if (map.hasOwnProperty(one)) {

@@ -96,7 +96,6 @@ class Shortcodes {
 
 			if (last_section) {
 				map[last_section].push(child)
-				detachElement(child)
 			}
 
 			if (one && last_section !== one) {
