@@ -1,6 +1,9 @@
 {
   "name": "shortcodes.js",
   "description": "JavaScript Front-end Shortcode Engine",
+  "version": "1.0.0",
+  "homepage": "https://github.com/stamat/shortcodes.js",
+  "main": "shortcodes.js",
   "license": "MIT",
   "dependencies": {
     "poops": "^1.0.7"

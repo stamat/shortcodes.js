@@ -1,646 +1,500 @@
-/** shortcodes.js v1.0.3 | Nikola Stamatovic @stamat <nikola@oshinstudio.com> OSHIN LLC | GPLv3 and Commercial **/
+/* shortcodes.js v1.0.0 | https://github.com/stamat/shortcodes.js | MIT License */
 
-
-//TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
-
-//TODO: decide if jQuery is really necessary
-
+// src/shortcodes.js
 function Shortcodes(options) {
-	this.descriptor_index = {};
-	this.exec_fns = {};
-
-	this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
-	this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
-
-	if (!options) {
-		options = {};
-	}
-
-	this.defaults = {
-		templates: '#templates',
-		template_class: 'template',
-		self_anchor_class: 'self-anchor',
-		placement_class_prefix: 'shortcode-landing'
-	};
-
-	this.options = options;
-
-	for (var k in this.defaults) {
-		if (!this.options.hasOwnProperty(k)) {
-			this.options[k] = this.defaults[k];
-		}
-	}
-
-	//Object deep clone from d0.js @stamat
-	if (!window.hasOwnProperty('d0')) {
-		window.d0 = {};
-
-		window.d0.clone = function(o) {
-			let res = null;
-			if(typeof obj === 'object' && obj !== null) {
-				res = window.d0._cloneObject(o);
-			} else if(Array.isArray(o)) {
-				res = window.d0._cloneArray(o);
-			} else {
-				res = o;
-			}
-			return res;
-		};
-
-
-		window.d0._cloneObject = function(o) {
-			let res = {};
-			for(var i in o) {
-				res[i] = window.d0.clone(o[i]);
-			}
-			return res;
-		};
-
-		window.d0._cloneArray = function(a) {
-			let res = [];
-			for(var i = 0; i < a.length; i++) {
-				res[i] = window.d0.clone(a[i]);
-			}
-			return res;
-		};
-	}
+  this.descriptor_index = {};
+  this.exec_fns = {};
+  this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
+  this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
+  if (!options) {
+    options = {};
+  }
+  this.defaults = {
+    templates: "#templates",
+    template_class: "template",
+    self_anchor_class: "self-anchor",
+    placement_class_prefix: "shortcode-landing"
+  };
+  this.options = options;
+  for (var k in this.defaults) {
+    if (!this.options.hasOwnProperty(k)) {
+      this.options[k] = this.defaults[k];
+    }
+  }
+  if (!window.hasOwnProperty("d0")) {
+    window.d0 = {};
+    window.d0.clone = function(o) {
+      let res2 = null;
+      if (typeof obj === "object" && obj !== null) {
+        res2 = window.d0._cloneObject(o);
+      } else if (Array.isArray(o)) {
+        res2 = window.d0._cloneArray(o);
+      } else {
+        res2 = o;
+      }
+      return res2;
+    };
+    window.d0._cloneObject = function(o) {
+      let res2 = {};
+      for (var i in o) {
+        res2[i] = window.d0.clone(o[i]);
+      }
+      return res2;
+    };
+    window.d0._cloneArray = function(a) {
+      let res2 = [];
+      for (var i = 0; i < a.length; i++) {
+        res2[i] = window.d0.clone(a[i]);
+      }
+      return res2;
+    };
+  }
 }
-
 Shortcodes.prototype.shopifyImageLink = function(src, width) {
-	var pref = '$1';
-	var suf = '$2';
-	var re = this.shopify_img_replacer_re;
-
-	if (!re.test(src)) {
-		return src;
-	}
-
-	if (this.shopify_img_re.test(src)) {
-		suf = '$3';
-		re = this.shopify_img_re;
-	}
-
-	if (!width) {
-		width = 100;
-	}
-
-	var replacement = pref+'_'+width+'x'+suf;
-	return src.replace(re, replacement);
+  var pref = "$1";
+  var suf = "$2";
+  var re = this.shopify_img_replacer_re;
+  if (!re.test(src)) {
+    return src;
+  }
+  if (this.shopify_img_re.test(src)) {
+    suf = "$3";
+    re = this.shopify_img_re;
+  }
+  if (!width) {
+    width = 100;
+  }
+  var replacement = pref + "_" + width + "x" + suf;
+  return src.replace(re, replacement);
 };
-
 Shortcodes.prototype.parseDOM = function($elem, one) {
-	var map = {};
- 	var last_section = null;
-
-	$elem = $($elem);
-
- 	var children = $elem.length > 1 ? $elem : $($elem).children();
- 	var re = /\[([\/a-z0-9\-_\s]+)\]/gi;
- 	var shortcode_counter = 0;
-
- 	for (var i = 0; i < children.length; i++) {
- 		var $child = $(children[i]);
-
-		var match = null;
-
-		if (!($child.is('pre') || $child.find('pre').length)) { //only if it's not "pre" element
-			var text = $child.text().toLowerCase().trim();
-
-	 		var match = re.exec(text);
-	 		re.lastIndex = 0; //regex needs a reset in for loops, I always forget this
-		}
-
- 		if (match && match.length > 1) {
-
- 			// detect closing tag, replace with /^\// regex
- 			if (match[1].indexOf('/') === 0 && last_section && last_section.indexOf(match[1].replace(/^\//, '')) > -1) {
- 				last_section = null;
- 				$child.remove();
- 				continue;
- 			}
-
- 			last_section = match[1] + ' sc' + shortcode_counter;
- 			var $self_locator = $('<div class="'+ this.options.self_anchor_class +' shortcode-'+last_section.split(/\s+/)[0]+' sc'+shortcode_counter+'" />');
-
- 			if (!map.hasOwnProperty(last_section)) {
- 				map[last_section] = [];
- 				shortcode_counter++;
- 			}
-
- 			$child.before($self_locator);
- 			map[last_section].push($self_locator);
- 			$child.remove();
-
- 			continue;
- 		}
-
- 		if (last_section) {
- 			map[last_section].push($child);
- 			$child.detach();
- 		}
-
- 		if (one && last_section !== one) {
- 			if (map.hasOwnProperty(one)) {
- 				return map[one];
- 			}
- 		}
- 	}
-
- 	if (one && map.hasOwnProperty(one)) {
- 		return map[one];
- 	}
- 	return map;
+  var map = {};
+  var last_section = null;
+  $elem = $($elem);
+  var children = $elem.length > 1 ? $elem : $($elem).children();
+  var re = /\[([\/a-z0-9\-_\s]+)\]/gi;
+  var shortcode_counter = 0;
+  for (var i = 0; i < children.length; i++) {
+    var $child = $(children[i]);
+    var match = null;
+    if (!($child.is("pre") || $child.find("pre").length)) {
+      var text = $child.text().toLowerCase().trim();
+      var match = re.exec(text);
+      re.lastIndex = 0;
+    }
+    if (match && match.length > 1) {
+      if (match[1].indexOf("/") === 0 && last_section && last_section.indexOf(match[1].replace(/^\//, "")) > -1) {
+        last_section = null;
+        $child.remove();
+        continue;
+      }
+      last_section = match[1] + " sc" + shortcode_counter;
+      var $self_locator = $('<div class="' + this.options.self_anchor_class + " shortcode-" + last_section.split(/\s+/)[0] + " sc" + shortcode_counter + '" />');
+      if (!map.hasOwnProperty(last_section)) {
+        map[last_section] = [];
+        shortcode_counter++;
+      }
+      $child.before($self_locator);
+      map[last_section].push($self_locator);
+      $child.remove();
+      continue;
+    }
+    if (last_section) {
+      map[last_section].push($child);
+      $child.detach();
+    }
+    if (one && last_section !== one) {
+      if (map.hasOwnProperty(one)) {
+        return map[one];
+      }
+    }
+  }
+  if (one && map.hasOwnProperty(one)) {
+    return map[one];
+  }
+  return map;
 };
-
-//if this isn't a God function I don't know what is... Wait, I know, it's a terrible nonrefactored code!
 Shortcodes.prototype.sortDOM = function(descriptor, val) {
-	var re = /^\{([a-z0-9\-_\s]+)\}$/gi; //subtag attributes
-
-	var item_tags = []; //collects attributes per "slide"
-	var elements = {}; //sorted DOM per tag name
-	var other_than_rest = {};
-	var other_than_rest_count = 0;
-	var first_element_key = null;
-	var last_element_key = null;
-	var max_element_key = null;
-
-	var cycle_counter = 0;
-	var subtag_first_flag = false;
-
-	//cycles are used for backaging the rest of elements in arrays
-	function newCycle() {
-		fillTheGaps();
-		cycle_counter += 1;
-	}
-
-	//rest has to be always present, it is a default collection of all undefined elements
-	elements.rest = [];
-
-	var memo_block_template = {}; //this will hold all the tag names from elements and remove the ones found, so we can generate empty states for the not found ones
-	var memo_block = {};
-
-	function fillTheGaps() {
-		for (var k in memo_block) {
-			elements[k].push(null);
-		}
-		memo_block = newMemoBlock();
-	}
-
-	//clone temp memo_block
-	function newMemoBlock() {
-		res = {};
-		for (var k in memo_block_template) {
-			res[k] = true;
-		}
-		return res;
-	}
-
-	//extract other than rest
-	if (descriptor.hasOwnProperty('elements')) {
-		for (var k in descriptor.elements) {
-			if (k !== 'rest') {
-				last_element_key = k;
-				if (!elements.hasOwnProperty(k)) {
-					elements[k] = [];
-				}
-
-				if (first_element_key === null) {
-					first_element_key = k;
-				}
-
-				if (!other_than_rest.hasOwnProperty(k)) {
-					other_than_rest[k] = true;
-					other_than_rest_count++;
-				}
-			}
-
-			memo_block_template[k] = true;
-			memo_block[k] = true;
-		}
-	}
-
-	for (var i = 0; i < val.length; i++) {
-		var $item = $(val[i]);
-
-		//XXX: ??? did we stop using this? this might be a part of legacy code
-		if ($item.hasClass('self-anchor')) {
-			// find yourself in this confusion
-			if (descriptor.anchor === 'self') {
-				descriptor.anchor = $item;
-			}
-			continue;
-		}
-
-		//if the contents are empty
-		if (!$item.is('img') && $item.html().trim() === '') {
-			continue;
-		}
-
-		var green_flag = false;
-
-		//testing for slide attributes
-		if (descriptor.hasOwnProperty('item_template')) {
-			var text = $item.text().toLowerCase().trim();
-			var match = re.exec(text);
-			re.lastIndex = 0;
-
-			if (match && match.length > 1) {
-				if (cycle_counter || subtag_first_flag) {
-					newCycle();
-				}
-
-				item_tags[cycle_counter] = match[1];
-				subtag_first_flag = true;
-				continue;
-			}
-		}
-
-		//iterating found elements, sort defined
-		if (other_than_rest_count) {
-			for (var k in other_than_rest) {
-
-				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count skip iteration
-					continue;
-				}
-
-				//XXX: this is a temporary and very bad solution | this was written to be able to use images inside the ul/li as secondary images
-				if (k === 'img' && $item.find('li').length) {
-					continue;
-				}
-
-				var $inner = $item.find(k); //gotta cover all the possible cases of undefined generated html
-
-				if ($item.is(k) || $inner.length) { //if element is found
-					if ($inner.length) {
-						$item = $inner.first();
-					}
-
-					// if an element is found that belongs to a memo block but it's already processed - this means a new cycle must begin
-					if (descriptor.hasOwnProperty('item_template') && !memo_block.hasOwnProperty(k)) {
-						newCycle();
-					}
-
-					elements[k].push($item);
-
-					if (descriptor.hasOwnProperty('item_template')) {
-						delete memo_block[k];
-					}
-					green_flag = true; // don't iterate the rest
-
-					break;
-				}
-			}
-		}
-
-		//iterating found elements, sort undefined = rest
-		if (!green_flag) {
-			//collecting other elements
-			if (descriptor.hasOwnProperty('item_template')) { //if it is a repeater
-				if (!elements.rest[cycle_counter]) {
-					delete memo_block['rest'];
-					elements.rest[cycle_counter] = [];
-				}
-				elements.rest[cycle_counter].push($item[0]);
-			} else {
-				elements.rest.push($item[0]);
-			}
-		}
-	}
-
-	if (descriptor.hasOwnProperty('item_template')) {
-		fillTheGaps();
-	}
-
-
-	// calculate which element has the most entries = number of slides
-	// this will be used as a slide delimiter later on
-	var max_count = null;
-
-	for (var k in other_than_rest) {
-		var c = elements[k].length;
-
-		if (max_element_key === null) {
-			max_element_key = k;
-			max_count = c;
-		} else {
-			if (c > max_count) {
-				max_element_key = k;
-				max_count = c;
-			}
-		}
-	}
-
-	return {	elements: elements,
-				item_tags: item_tags,
-				first_element_key: first_element_key,
-				last_element_key: last_element_key,
-				max_element_key: max_element_key
-	};
-}
-
-//TODO: simplify with declarative programming
+  var re = /^\{([a-z0-9\-_\s]+)\}$/gi;
+  var item_tags = [];
+  var elements = {};
+  var other_than_rest = {};
+  var other_than_rest_count = 0;
+  var first_element_key = null;
+  var last_element_key = null;
+  var max_element_key = null;
+  var cycle_counter = 0;
+  var subtag_first_flag = false;
+  function newCycle() {
+    fillTheGaps();
+    cycle_counter += 1;
+  }
+  elements.rest = [];
+  var memo_block_template = {};
+  var memo_block = {};
+  function fillTheGaps() {
+    for (var k2 in memo_block) {
+      elements[k2].push(null);
+    }
+    memo_block = newMemoBlock();
+  }
+  function newMemoBlock() {
+    res = {};
+    for (var k2 in memo_block_template) {
+      res[k2] = true;
+    }
+    return res;
+  }
+  if (descriptor.hasOwnProperty("elements")) {
+    for (var k in descriptor.elements) {
+      if (k !== "rest") {
+        last_element_key = k;
+        if (!elements.hasOwnProperty(k)) {
+          elements[k] = [];
+        }
+        if (first_element_key === null) {
+          first_element_key = k;
+        }
+        if (!other_than_rest.hasOwnProperty(k)) {
+          other_than_rest[k] = true;
+          other_than_rest_count++;
+        }
+      }
+      memo_block_template[k] = true;
+      memo_block[k] = true;
+    }
+  }
+  for (var i = 0; i < val.length; i++) {
+    var $item = $(val[i]);
+    if ($item.hasClass("self-anchor")) {
+      if (descriptor.anchor === "self") {
+        descriptor.anchor = $item;
+      }
+      continue;
+    }
+    if (!$item.is("img") && $item.html().trim() === "") {
+      continue;
+    }
+    var green_flag = false;
+    if (descriptor.hasOwnProperty("item_template")) {
+      var text = $item.text().toLowerCase().trim();
+      var match = re.exec(text);
+      re.lastIndex = 0;
+      if (match && match.length > 1) {
+        if (cycle_counter || subtag_first_flag) {
+          newCycle();
+        }
+        item_tags[cycle_counter] = match[1];
+        subtag_first_flag = true;
+        continue;
+      }
+    }
+    if (other_than_rest_count) {
+      for (var k in other_than_rest) {
+        if (elements[k].length === descriptor.elements[k].count) {
+          continue;
+        }
+        if (k === "img" && $item.find("li").length) {
+          continue;
+        }
+        var $inner = $item.find(k);
+        if ($item.is(k) || $inner.length) {
+          if ($inner.length) {
+            $item = $inner.first();
+          }
+          if (descriptor.hasOwnProperty("item_template") && !memo_block.hasOwnProperty(k)) {
+            newCycle();
+          }
+          elements[k].push($item);
+          if (descriptor.hasOwnProperty("item_template")) {
+            delete memo_block[k];
+          }
+          green_flag = true;
+          break;
+        }
+      }
+    }
+    if (!green_flag) {
+      if (descriptor.hasOwnProperty("item_template")) {
+        if (!elements.rest[cycle_counter]) {
+          delete memo_block["rest"];
+          elements.rest[cycle_counter] = [];
+        }
+        elements.rest[cycle_counter].push($item[0]);
+      } else {
+        elements.rest.push($item[0]);
+      }
+    }
+  }
+  if (descriptor.hasOwnProperty("item_template")) {
+    fillTheGaps();
+  }
+  var max_count = null;
+  for (var k in other_than_rest) {
+    var c = elements[k].length;
+    if (max_element_key === null) {
+      max_element_key = k;
+      max_count = c;
+    } else {
+      if (c > max_count) {
+        max_element_key = k;
+        max_count = c;
+      }
+    }
+  }
+  return {
+    elements,
+    item_tags,
+    first_element_key,
+    last_element_key,
+    max_element_key
+  };
+};
 Shortcodes.prototype.executeProperties = function($item, $dest, props, descriptor, num) {
-	// Extract DOM attributes
-	if (props.extract_fn === 'attr') {
-		if (typeof props.extract_attr === 'string') {
-			extract = $item[props.extract_fn](props.extract_attr);
-
-			if ($item.is('img') && props.extract_attr === 'src') {
-				if (extract && this.shopify_img_re.test(extract)) {
-					extract = extract.replace(this.shopify_img_re, '$1$3');
-				}
-			}
-		} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
-			extract = [];
-			for (var i = 0; i < props.extract_attr.length; i++) {
-				if (props.extract_attr[i] === 'html') {
-					extract.push($item.html());
-					continue;
-				}
-
-				if ($item.is('img') && props.extract_attr[i] === 'src') {
-					var src = $item.attr('src');
-					if (src && this.shopify_img_re.test(src)) {
-						extract.push(src.replace(this.shopify_img_re, '$1$3'));
-						continue;
-					}
-				}
-				var attr = props.extract_attr[i];
-				extract.push($item[props.extract_fn](attr));
-			}
-		}
-	// Extract DOM
-	} else if (props.extract_fn === 'self') {
-		extract = $item;
-	// Extract with jQuery function
-	} else {
-		extract = $item[props.extract_fn]();
-	}
-
-	//TODO: should be extract_fn typeof function
-	if (props.hasOwnProperty('parse')) {
-		if (typeof props.parse === 'function') {
-			extract = props.parse(extract);  //execute custom extract parsing function
-		} else {
-			if (window.hasOwnProperty(props.parse)) {
-				extract = window[props.parse](extract);
-			}
-		}
-	}
-
-	if (props.bind_fn === 'css'
-		&& props.hasOwnProperty('bind_property')
-		&& props.bind_property === 'background-image') {
-		extract  = 'url(' + extract + ')';
-	} else if (typeof props.bind_fn === 'function') {
-		props.bind_fn(extract, $dest, props, descriptor, num); //execute custom bind function
-		return;
-	}
-
-	//do some auto binding
-	switch (props.anchor_element) {
-		case 'item':
-			$target = $dest.find(props.anchor);
-			if ($dest.is(props.anchor) && $target.length === 0) {
-				$target = $dest;
-			}
-
-			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-				$target[props.bind_fn](props.bind_property, extract);
-			} else {
-				$target[props.bind_fn](extract);
-			}
-			break;
-		case 'template':
-			$target = $dest.find(props.anchor);
-			if ($dest.is(props.anchor) && $target.length === 0) {
-				$target = $dest;
-			}
-
-			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-				$target[props.bind_fn](props.bind_property, extract);
-			} else {
-				$target[props.bind_fn](extract);
-			}
-			break;
-		default:
-			$target = $(descriptor.anchor).find(props.anchor);
-			if ($(descriptor.anchor).is(props.anchor) && $target.length === 0) {
-				$target = $(descriptor.anchor);
-			}
-
-			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-				$target[props.bind_fn](props.bind_property, extract);
-			} else {
-				$target[props.bind_fn](extract);
-			}
-	}
-}
-
+  if (props.extract_fn === "attr") {
+    if (typeof props.extract_attr === "string") {
+      extract = $item[props.extract_fn](props.extract_attr);
+      if ($item.is("img") && props.extract_attr === "src") {
+        if (extract && this.shopify_img_re.test(extract)) {
+          extract = extract.replace(this.shopify_img_re, "$1$3");
+        }
+      }
+    } else {
+      extract = [];
+      for (var i = 0; i < props.extract_attr.length; i++) {
+        if (props.extract_attr[i] === "html") {
+          extract.push($item.html());
+          continue;
+        }
+        if ($item.is("img") && props.extract_attr[i] === "src") {
+          var src = $item.attr("src");
+          if (src && this.shopify_img_re.test(src)) {
+            extract.push(src.replace(this.shopify_img_re, "$1$3"));
+            continue;
+          }
+        }
+        var attr = props.extract_attr[i];
+        extract.push($item[props.extract_fn](attr));
+      }
+    }
+  } else if (props.extract_fn === "self") {
+    extract = $item;
+  } else {
+    extract = $item[props.extract_fn]();
+  }
+  if (props.hasOwnProperty("parse")) {
+    if (typeof props.parse === "function") {
+      extract = props.parse(extract);
+    } else {
+      if (window.hasOwnProperty(props.parse)) {
+        extract = window[props.parse](extract);
+      }
+    }
+  }
+  if (props.bind_fn === "css" && props.hasOwnProperty("bind_property") && props.bind_property === "background-image") {
+    extract = "url(" + extract + ")";
+  } else if (typeof props.bind_fn === "function") {
+    props.bind_fn(extract, $dest, props, descriptor, num);
+    return;
+  }
+  switch (props.anchor_element) {
+    case "item":
+      $target = $dest.find(props.anchor);
+      if ($dest.is(props.anchor) && $target.length === 0) {
+        $target = $dest;
+      }
+      if (props.bind_fn === "css" && props.hasOwnProperty("bind_property")) {
+        $target[props.bind_fn](props.bind_property, extract);
+      } else {
+        $target[props.bind_fn](extract);
+      }
+      break;
+    case "template":
+      $target = $dest.find(props.anchor);
+      if ($dest.is(props.anchor) && $target.length === 0) {
+        $target = $dest;
+      }
+      if (props.bind_fn === "css" && props.hasOwnProperty("bind_property")) {
+        $target[props.bind_fn](props.bind_property, extract);
+      } else {
+        $target[props.bind_fn](extract);
+      }
+      break;
+    default:
+      $target = $(descriptor.anchor).find(props.anchor);
+      if ($(descriptor.anchor).is(props.anchor) && $target.length === 0) {
+        $target = $(descriptor.anchor);
+      }
+      if (props.bind_fn === "css" && props.hasOwnProperty("bind_property")) {
+        $target[props.bind_fn](props.bind_property, extract);
+      } else {
+        $target[props.bind_fn](extract);
+      }
+  }
+};
 Shortcodes.prototype.bind = function(descriptor, val, parsed_attrs) {
-	var $template = null;
-
-	if (descriptor.hasOwnProperty('template')) {
-		$template = this.getTemplate(descriptor.template);
-	}
-
-	var sorted = this.sortDOM(descriptor, val);
-
-	if (descriptor.hasOwnProperty('item_template')) {
-		for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
-			var $item_template = this.getTemplate(descriptor.item_template);
-			if (sorted.item_tags[i]) {
-				$item_template.addClass(sorted.item_tags[i]);
-			}
-
-			for (var k in descriptor.elements) {
-				var props = descriptor.elements[k];
-				if (sorted.elements[k][i]) { //if the element exists, may be an uneven number
-					var $item = $(sorted.elements[k][i]);
-					this.executeProperties($item, $item_template, props, descriptor, i);
-				}
-			}
-
-			var $dest = descriptor.hasOwnProperty('template') ? $template.find(descriptor.item_anchor) : $(descriptor.anchor);
-			if (typeof descriptor.bind_fn === 'function') {
-				descriptor.bind_fn($item_template, $dest, descriptor, parsed_attrs, i);
-			} else {
-				$dest[descriptor.bind_fn]($item_template);
-			}
-		}
-	} else {
-		if (descriptor.hasOwnProperty('elements')) {
-			for (var k in descriptor.elements) {
-				var props = descriptor.elements[k];
-
-				if (sorted.elements.hasOwnProperty(k)) {
-					for (var i = 0; i < sorted.elements[k].length; i++) {
-						var $item = $(sorted.elements[k][i]);
-						var $dest = descriptor.hasOwnProperty('template') ? $template : $(descriptor.anchor);
-						this.executeProperties($item, $dest, props, descriptor, i);
-					}
-				}
-			}
-		} else {
-			var $dest = descriptor.hasOwnProperty('template') ? $template : $(descriptor.anchor);
-			if (typeof descriptor.bind_fn === 'function') {
-				descriptor.bind_fn(sorted.elements.rest, $dest, descriptor, parsed_attrs);
-			} else {
-				$dest[descriptor.bind_fn](sorted.elements.rest);
-			}
-		}
-	}
-
-	if (descriptor.hasOwnProperty('template')) {
-		if (typeof descriptor.bind_fn === 'function') {
-			descriptor.bind_fn($template, $(descriptor.anchor), descriptor, parsed_attrs);
-		} else {
-			$(descriptor.anchor)[descriptor.bind_fn]($template);
-		}
-		return $template;
-	}
-
-	return $(descriptor.anchor);
+  var $template = null;
+  if (descriptor.hasOwnProperty("template")) {
+    $template = this.getTemplate(descriptor.template);
+  }
+  var sorted = this.sortDOM(descriptor, val);
+  if (descriptor.hasOwnProperty("item_template")) {
+    for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
+      var $item_template = this.getTemplate(descriptor.item_template);
+      if (sorted.item_tags[i]) {
+        $item_template.addClass(sorted.item_tags[i]);
+      }
+      for (var k in descriptor.elements) {
+        var props = descriptor.elements[k];
+        if (sorted.elements[k][i]) {
+          var $item = $(sorted.elements[k][i]);
+          this.executeProperties($item, $item_template, props, descriptor, i);
+        }
+      }
+      var $dest = descriptor.hasOwnProperty("template") ? $template.find(descriptor.item_anchor) : $(descriptor.anchor);
+      if (typeof descriptor.bind_fn === "function") {
+        descriptor.bind_fn($item_template, $dest, descriptor, parsed_attrs, i);
+      } else {
+        $dest[descriptor.bind_fn]($item_template);
+      }
+    }
+  } else {
+    if (descriptor.hasOwnProperty("elements")) {
+      for (var k in descriptor.elements) {
+        var props = descriptor.elements[k];
+        if (sorted.elements.hasOwnProperty(k)) {
+          for (var i = 0; i < sorted.elements[k].length; i++) {
+            var $item = $(sorted.elements[k][i]);
+            var $dest = descriptor.hasOwnProperty("template") ? $template : $(descriptor.anchor);
+            this.executeProperties($item, $dest, props, descriptor, i);
+          }
+        }
+      }
+    } else {
+      var $dest = descriptor.hasOwnProperty("template") ? $template : $(descriptor.anchor);
+      if (typeof descriptor.bind_fn === "function") {
+        descriptor.bind_fn(sorted.elements.rest, $dest, descriptor, parsed_attrs);
+      } else {
+        $dest[descriptor.bind_fn](sorted.elements.rest);
+      }
+    }
+  }
+  if (descriptor.hasOwnProperty("template")) {
+    if (typeof descriptor.bind_fn === "function") {
+      descriptor.bind_fn($template, $(descriptor.anchor), descriptor, parsed_attrs);
+    } else {
+      $(descriptor.anchor)[descriptor.bind_fn]($template);
+    }
+    return $template;
+  }
+  return $(descriptor.anchor);
 };
-
 Shortcodes.prototype.getTemplate = function(selector) {
-	var $template = $(this.options.templates).find(selector+'.'+this.options.template_class).clone();
-	$template.removeClass(this.options.template_class);
-	return $template;
-}
-
-//TODO: what about subtag attribute parses?
+  var $template = $(this.options.templates).find(selector + "." + this.options.template_class).clone();
+  $template.removeClass(this.options.template_class);
+  return $template;
+};
 Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
-	var self = this;
-	var res = {
-		classes: [],
-		css: {}
-	};
-
-	var fns = {};
-
-	//option to add parsers from descriptor
-	if (descriptor.hasOwnProperty('attribute_parsers')) {
-		for (var k in descriptor.attribute_parsers) {
-			fns[k] = descriptor.attribute_parsers[k];
-		}
-	}
-
-	//some default parsers
-	fns['header'] = function(pts, descriptor, attr) {
-		var $header = null;
-		if (descriptor.hasOwnProperty('header_selector') && descriptor.header_selector) {
-			$header = $(descriptor.header_selector);
-		}
-
-		if ($header === null || !$header.length) {
-			$header = $('header');
-		}
-
-		if ($header === null || !$header.length) {
-			$header = $('body');
-		}
-
-		$header.addClass(pts.join('-'));
-	}
-
-	fns['placement'] = function(pts, descriptor, attr) {
-		if (pts[0]) {
-			if (pts[0] === 'content') {
-				descriptor.anchor = 'self';
-			} else {
-				descriptor.anchor = '.' + self.options.placement_class_prefix + '-' + pts[0];
-			}
-		}
-	}
-
-	fns['background'] = function(pts, descriptor, attr) {
-		if (pts[0] && pts[0] === 'color' && pts[1]) {
-			res.css['background-color'] = '#'+pts[1];
-		} else {
-			res.classes.push(attr);
-		}
-	}
-
-	fns['color'] = function(pts, descriptor, attr) {
-		if (pts[0]) {
-			res.css['color'] = pts[0];
-		} else {
-			res.classes.push(attr);
-		}
-	}
-
-	for (var i = 0; i < attrs.length; i++) {
-		var attr = attrs[i].trim().toLowerCase();
-
-		if (/sc[0-9]+/gi.test(attr)) {
-			continue;
-		}
-
-		var pts = attr.split('-');
-		if (pts[0] && fns.hasOwnProperty(pts[0])) {
-			fns[pts.shift()](pts, descriptor, attr);
-		} else {
-			res.classes.push(attr);
-		}
-	}
-
-	return res;
+  var self = this;
+  var res2 = {
+    classes: [],
+    css: {}
+  };
+  var fns = {};
+  if (descriptor.hasOwnProperty("attribute_parsers")) {
+    for (var k in descriptor.attribute_parsers) {
+      fns[k] = descriptor.attribute_parsers[k];
+    }
+  }
+  fns["header"] = function(pts2, descriptor2, attr2) {
+    var $header = null;
+    if (descriptor2.hasOwnProperty("header_selector") && descriptor2.header_selector) {
+      $header = $(descriptor2.header_selector);
+    }
+    if ($header === null || !$header.length) {
+      $header = $("header");
+    }
+    if ($header === null || !$header.length) {
+      $header = $("body");
+    }
+    $header.addClass(pts2.join("-"));
+  };
+  fns["placement"] = function(pts2, descriptor2, attr2) {
+    if (pts2[0]) {
+      if (pts2[0] === "content") {
+        descriptor2.anchor = "self";
+      } else {
+        descriptor2.anchor = "." + self.options.placement_class_prefix + "-" + pts2[0];
+      }
+    }
+  };
+  fns["background"] = function(pts2, descriptor2, attr2) {
+    if (pts2[0] && pts2[0] === "color" && pts2[1]) {
+      res2.css["background-color"] = "#" + pts2[1];
+    } else {
+      res2.classes.push(attr2);
+    }
+  };
+  fns["color"] = function(pts2, descriptor2, attr2) {
+    if (pts2[0]) {
+      res2.css["color"] = pts2[0];
+    } else {
+      res2.classes.push(attr2);
+    }
+  };
+  for (var i = 0; i < attrs.length; i++) {
+    var attr = attrs[i].trim().toLowerCase();
+    if (/sc[0-9]+/gi.test(attr)) {
+      continue;
+    }
+    var pts = attr.split("-");
+    if (pts[0] && fns.hasOwnProperty(pts[0])) {
+      fns[pts.shift()](pts, descriptor, attr);
+    } else {
+      res2.classes.push(attr);
+    }
+  }
+  return res2;
 };
-
 Shortcodes.prototype.register = function(shortcode_name, descriptor) {
-	this.descriptor_index[shortcode_name] = descriptor;
-	var self = this;
-
-	this.exec_fns[shortcode_name] = function(k, attrs, val) {
-		var descriptor = window.d0.clone(self.descriptor_index[k]);
-
-		var parsed_attrs = self.parseAttributes(descriptor, attrs);
-
-		if (descriptor.hasOwnProperty('pre') && descriptor.pre) {
-			descriptor.pre(descriptor, attrs, val, parsed_attrs);
-		}
-
-		var $template = self.bind(descriptor, val, parsed_attrs);
-
-		$template.addClass(parsed_attrs.classes.join(' '));
-		$template.css(parsed_attrs.css);
-		$template.addClass('shortcode-js');
-
-		//TODO: per item callback
-		if (descriptor.hasOwnProperty('callback') && descriptor.callback) {
-			descriptor.callback($template, parsed_attrs, descriptor);
-		}
-	};
+  this.descriptor_index[shortcode_name] = descriptor;
+  var self = this;
+  this.exec_fns[shortcode_name] = function(k, attrs, val) {
+    var descriptor2 = window.d0.clone(self.descriptor_index[k]);
+    var parsed_attrs = self.parseAttributes(descriptor2, attrs);
+    if (descriptor2.hasOwnProperty("pre") && descriptor2.pre) {
+      descriptor2.pre(descriptor2, attrs, val, parsed_attrs);
+    }
+    var $template = self.bind(descriptor2, val, parsed_attrs);
+    $template.addClass(parsed_attrs.classes.join(" "));
+    $template.css(parsed_attrs.css);
+    $template.addClass("shortcode-js");
+    if (descriptor2.hasOwnProperty("callback") && descriptor2.callback) {
+      descriptor2.callback($template, parsed_attrs, descriptor2);
+    }
+  };
 };
-
 Shortcodes.prototype.execute = function($elem, callback) {
-	$($elem).css('visibility', 'hidden');
-	var shortcode_map = this.parseDOM($elem);
-
-	for (var k in shortcode_map) {
-		var attrs = k.split(/\s+/gi);
-
-		var fn_name = attrs.shift();
-
-		if (this.exec_fns.hasOwnProperty(fn_name)) {
-			this.exec_fns[fn_name](fn_name, attrs, shortcode_map[k]);
-		}
-	}
-
-	$($elem).css('visibility', 'visible');
-
-	if (callback !== undefined) {
-		callback(shortcode_map, this.exec_fns);
-	}
+  $($elem).css("visibility", "hidden");
+  var shortcode_map = this.parseDOM($elem);
+  for (var k in shortcode_map) {
+    var attrs = k.split(/\s+/gi);
+    var fn_name = attrs.shift();
+    if (this.exec_fns.hasOwnProperty(fn_name)) {
+      this.exec_fns[fn_name](fn_name, attrs, shortcode_map[k]);
+    }
+  }
+  $($elem).css("visibility", "visible");
+  if (callback !== void 0) {
+    callback(shortcode_map, this.exec_fns);
+  }
 };
-
 Shortcodes.prototype.clear = function() {
-	$('.shortcode-js').remove();
-	$('.self-anchor').remove();
+  $(".shortcode-js").remove();
+  $(".self-anchor").remove();
 };
-
 Shortcodes.prototype.reinit = function($elem, callback) {
-	this.clear();
-	this.execute($elem, callback);
+  this.clear();
+  this.execute($elem, callback);
 };
+//# sourceMappingURL=shortcodes.js.map

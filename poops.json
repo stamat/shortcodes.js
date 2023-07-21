@@ -1,0 +1,45 @@
+{
+  "scripts": [{
+    "in": "src/shortcodes.js",
+    "out": "shortcodes.js",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false,
+      "format": "esm",
+      "target": "es2019",
+      "mangle": true
+    }
+  }],
+  "styles": [{
+    "in": "_sass/index.scss",
+    "out": "styles.css",
+    "options": {
+      "sourcemap": true,
+      "minify": true
+    }
+  }],
+  "markup": {
+    "in": "_markup",
+    "out": "/",
+    "site": {
+      "title": "shortcodes.js - JavaScript Front-end Shortcode Engine",
+      "description": "JavaScript Front-end Shortcode Engine"
+    },
+    "includePaths": [
+      "_layouts",
+      "_templates"
+    ]
+  },
+  "banner": "/* {{ name }} v{{ version }} | {{ homepage }} | {{ license }} License */",
+  "serve" : {
+    "port": 4040,
+    "base": "/"
+  },
+  "livereload": true,
+  "watch": [
+    "_markup",
+    "_sass",
+    "src"
+  ]
+}
