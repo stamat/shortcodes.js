@@ -32,13 +32,10 @@ function clone(o) {
   return res2;
 }
 function detachElement(element) {
-  const parent = element.parentNode;
-  if (parent) {
-    const clonedElement = element.cloneNode(true);
-    parent.replaceChild(clonedElement, element);
-    return clonedElement;
+  if (element && element.parentNode) {
+    element.parentNode.removeChild(element);
   }
-  return null;
+  return element;
 }
 function insertBeforeElement(targetElement, newElement) {
   var _a;
