@@ -35,62 +35,21 @@ function Shortcodes(options) {
 	if (!window.hasOwnProperty('d0')) {
 		window.d0 = {};
 
-		window.d0.getClass = function(val) {
-			return Object.prototype.toString.call(val)
-				.match(/^\[object\s(.*)\]$/)[1];
-		};
-
-		window.d0.whatis = function(val) {
-
-			if (val === undefined)
-				return 'undefined';
-			if (val === null)
-				return 'null';
-
-			var type = typeof val;
-
-			if (type === 'object')
-				type = window.d0.getClass(val).toLowerCase();
-
-			if (type === 'number') {
-				if (val.toString().indexOf('.') > 0)
-					return 'float';
-				else
-					return 'integer';
-			}
-
-			return type;
-		};
-
-		window.d0.types = {
-			'undefined': -1,
-			'null': 0,
-			'boolean': 1,
-			'integer': 2,
-			'float': 3,
-			'string': 4,
-			'array': 5,
-			'object': 6,
-			'function': 7,
-			'regexp': 8,
-			'date': 9
-		};
-
 		window.d0.clone = function(o) {
-			var res = null;
-			var type = window.d0.types[window.d0.whatis(o)];
-			if(type === 6) {
+			let res = null;
+			if(typeof obj === 'object' && obj !== null) {
 				res = window.d0._cloneObject(o);
-		    } else if(type === 5) {
-		    	res = window.d0._cloneArray(o);
-		    } else {
-		    	res = o;
-		    }
-		    return res;
+			} else if(Array.isArray(o)) {
+				res = window.d0._cloneArray(o);
+			} else {
+				res = o;
+			}
+			return res;
 		};
+
 
 		window.d0._cloneObject = function(o) {
-			var res = {};
+			let res = {};
 			for(var i in o) {
 				res[i] = window.d0.clone(o[i]);
 			}
@@ -98,7 +57,7 @@ function Shortcodes(options) {
 		};
 
 		window.d0._cloneArray = function(a) {
-			var res = [];
+			let res = [];
 			for(var i = 0; i < a.length; i++) {
 				res[i] = window.d0.clone(a[i]);
 			}
