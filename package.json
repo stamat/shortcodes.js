@@ -7,5 +7,9 @@
   "license": "MIT",
   "dependencies": {
     "poops": "^1.0.7"
+  },
+  "devDependencies": {
+    "esm": "^3.2.25",
+    "jest": "^29.6.1"
   }
 }
