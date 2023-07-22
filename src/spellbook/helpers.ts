@@ -83,4 +83,15 @@ function insertBeforeElement(targetElement: HTMLElement, newElement: HTMLElement
   targetElement.parentNode?.insertBefore(newElement, targetElement);
 }
 
-export { clone, shallowMerge, detachElement, insertBeforeElement }
+/**
+ * Removes all elements matching a selector from the DOM
+ * 
+ * @param {string} selector The selector to select elements to remove
+ */
+function removeAll(selector: string) {
+  for (const element of document.querySelectorAll(selector)) {
+    element.remove();
+  }
+}
+
+export { clone, shallowMerge, detachElement, insertBeforeElement, removeAll }

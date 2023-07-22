@@ -25,7 +25,7 @@
     $('.code-button.active').parent().find('.code').stop(true).fadeOut();
     $('.code-button.active').removeClass('active');
 
-    shortcodes.reinit($('#editor .ql-editor').clone(), function(){
+    shortcodes.reinitialize($('#editor .ql-editor').clone()[0], function(){
       // https://www.youtube.com/watch?v=qetW6R9Jxs4
     });
   });
@@ -88,7 +88,7 @@
 -->
 <script type="text/javascript">
   $(document).ready(function(){
-    shortcodes.execute($('#editor .ql-editor').clone(), function() {
+    shortcodes.execute($('#editor .ql-editor').clone()[0], function() {
       // https://www.youtube.com/watch?v=qetW6R9Jxs4
       console.log(arguments);
     });

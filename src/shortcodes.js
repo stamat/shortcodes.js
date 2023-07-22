@@ -1,4 +1,4 @@
-import { clone, shallowMerge, detachElement, insertBeforeElement } from './spellbook/helpers';
+import { clone, shallowMerge, removeAll, insertBeforeElement } from './spellbook/helpers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
 
@@ -11,6 +11,9 @@ class Shortcodes {
 	
 		this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi
 		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi
+
+		this.attribute_re = /(\w+)*?\s*(?:([\w\-_]+)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi
+		this.shortcode_re = 
 		
 		this.options = {
 			templates: '#templates',
@@ -44,15 +47,15 @@ class Shortcodes {
 	/**
 	 * Finds elements between the shortcodes makes a map of all shortcodes and their containing elements
 	 * 
-	 * @param {HTMLElement|NodeList} elem - Entry element to parse and find shortcodes in
+	 * @param {HTMLElement} elem - Entry element to parse and find shortcodes in
 	 * @param {string} one - If specified, returns only the shortcode map for the specified shortcode
 	 */
 	parseDOM(elem, one) {
 		const map = {}
 		let last_section = null
-		const children = elem instanceof NodeList ? elem : elem.children
+		const children = elem.children
 		
-		const re = /\[([\/a-z0-9\-_\s]+)\]/gi // regex for detecting shortcodes
+		const re = /\[([\/a-z0-9\-_="'\s]+)\]/gi // regex for detecting shortcodes
 		let shortcode_counter = 0
 
 		for (let i = 0; i < children.length; i++) {
@@ -470,39 +473,45 @@ Shortcodes.prototype.getTemplate = function(selector) {
 	return $template;
 }
 
-//TODO: what about subtag attribute parses?
-Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
-	var self = this;
+Shortcodes.prototype.parseAttribute = function(attr) {
 	var res = {
-		classes: [],
-		css: {}
-	};
-
-	var fns = {};
-
-	//option to add parsers from descriptor
-	if (descriptor.hasOwnProperty('attribute_parsers')) {
-		for (var k in descriptor.attribute_parsers) {
-			fns[k] = descriptor.attribute_parsers[k];
-		}
+		name: null,
+		value: null
 	}
 
+	var pts = attr.split('=');
+
+	if (pts.length === 2) {
+		res.name = pts[0].trim();
+		res.value = pts[1].trim();
+	}
+
+	return res;
+}
+
+//TODO: what about subtag attribute parses? Check how subtags are pared?
+Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
+	var self = this
+	const res = {
+		classes: [],
+		css: {},
+		attrs: {}
+	}
+
+	const fns = {}
+
 	//some default parsers
+
 	fns['header'] = function(pts, descriptor, attr) {
-		var $header = null;
+		let header = null;
 		if (descriptor.hasOwnProperty('header_selector') && descriptor.header_selector) {
-			$header = $(descriptor.header_selector);
+			header = document.querySelector(descriptor.header_selector);
 		}
 
-		if ($header === null || !$header.length) {
-			$header = $('header');
-		}
+		if (!header) document.querySelector('header')
+		if (!header) document.querySelector('body')
 
-		if ($header === null || !$header.length) {
-			$header = $('body');
-		}
-
-		$header.addClass(pts.join('-'));
+		header.classList.add(pts.join('-'))
 	}
 
 	fns['placement'] = function(pts, descriptor, attr) {
@@ -515,9 +524,11 @@ Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
 		}
 	}
 
+
+	//TODO: This shouldn't be so hardcode...
 	fns['background'] = function(pts, descriptor, attr) {
 		if (pts[0] && pts[0] === 'color' && pts[1]) {
-			res.css['background-color'] = '#'+pts[1];
+			res.css['background-color'] = '#'+pts[1]
 		} else {
 			res.classes.push(attr);
 		}
@@ -525,41 +536,55 @@ Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
 
 	fns['color'] = function(pts, descriptor, attr) {
 		if (pts[0]) {
-			res.css['color'] = pts[0];
+			res.css['color'] = pts[0]
 		} else {
-			res.classes.push(attr);
+			res.classes.push(attr)
+		}
+	}
+
+	//Descriptor can carry custom attribute parsers. They can override the default ones
+	if (descriptor.hasOwnProperty('attribute_parsers')) {
+		for (var k in descriptor.attribute_parsers) {
+			fns[k] = descriptor.attribute_parsers[k]
 		}
 	}
 
 	for (var i = 0; i < attrs.length; i++) {
-		var attr = attrs[i].trim().toLowerCase();
+		var attr = attrs[i].trim().toLowerCase()
 
+		// these are shortcode identifiers, move along
 		if (/sc[0-9]+/gi.test(attr)) {
-			continue;
+			continue
 		}
 
+		// TODO: 
 		var pts = attr.split('-');
 		if (pts[0] && fns.hasOwnProperty(pts[0])) {
 			fns[pts.shift()](pts, descriptor, attr);
 		} else {
-			res.classes.push(attr);
+			res.classes.push(attr)
 		}
 	}
 
-	return res;
-};
+	return res
+}
 
 Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 	this.descriptor_index[shortcode_name] = descriptor;
 	var self = this;
 
 	this.exec_fns[shortcode_name] = function(k, attrs, val) {
-		var descriptor = clone(self.descriptor_index[k]);
+		const descriptor = clone(self.descriptor_index[k]);
 
-		var parsed_attrs = self.parseAttributes(descriptor, attrs);
+		const parsed_attrs = self.parseAttributes(descriptor, attrs);
 
-		if (descriptor.hasOwnProperty('pre') && descriptor.pre) {
-			descriptor.pre(descriptor, attrs, val, parsed_attrs);
+		console.log(parsed_attrs)
+
+		// execute preprocessing function
+		if (descriptor.hasOwnProperty('pre') 
+		  && descriptor.pre 
+			&& typeof descriptor.pre === 'function') {
+				descriptor.pre(descriptor, attrs, val, parsed_attrs);
 		}
 
 		var $template = self.bind(descriptor, val, parsed_attrs);
@@ -576,32 +601,28 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 };
 
 Shortcodes.prototype.execute = function($elem, callback) {
-	$($elem).css('visibility', 'hidden');
-	var shortcode_map = this.parseDOM($elem[0]);
+	$elem.style.visibility = 'hidden'
+	const shortcode_map = this.parseDOM($elem)
 
 	for (var k in shortcode_map) {
-		var attrs = k.split(/\s+/gi);
+		const attrs = k.split(/\s+/gi)
 
-		var fn_name = attrs.shift();
+		const fn_name = attrs.shift()
 
 		if (this.exec_fns.hasOwnProperty(fn_name)) {
 			this.exec_fns[fn_name](fn_name, attrs, shortcode_map[k]);
 		}
 	}
-
-	$($elem).css('visibility', 'visible');
-
-	if (callback !== undefined) {
-		callback(shortcode_map, this.exec_fns);
-	}
-};
+	$elem.style.visibility = 'visible'
+	if (callback) callback(shortcode_map, this.exec_fns)
+}
 
 Shortcodes.prototype.clear = function() {
-	$('.shortcode-js').remove();
-	$('.self-anchor').remove();
+	removeAll('.shortcode-js')
+	removeAll('.self-anchor')
 };
 
-Shortcodes.prototype.reinit = function($elem, callback) {
-	this.clear();
-	this.execute($elem, callback);
+Shortcodes.prototype.reinitialize = function($elem, callback) {
+	this.clear()
+	this.execute($elem, callback)
 };

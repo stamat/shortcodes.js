@@ -35,6 +35,11 @@ function insertBeforeElement(targetElement, newElement) {
   var _a;
   (_a = targetElement.parentNode) == null ? void 0 : _a.insertBefore(newElement, targetElement);
 }
+function removeAll(selector) {
+  for (const element of document.querySelectorAll(selector)) {
+    element.remove();
+  }
+}
 
 // src/shortcodes.js
 var Shortcodes = class {
@@ -43,7 +48,8 @@ var Shortcodes = class {
     this.exec_fns = {};
     this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
     this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
-    this.options = {
+    this.attribute_re = /(\w+)*?\s*(?:([\w\-_]+)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi;
+    this.shortcode_re = this.options = {
       templates: "#templates",
       template_class: "template",
       self_anchor_class: "self-anchor",
@@ -71,14 +77,14 @@ var Shortcodes = class {
   /**
    * Finds elements between the shortcodes makes a map of all shortcodes and their containing elements
    * 
-   * @param {HTMLElement|NodeList} elem - Entry element to parse and find shortcodes in
+   * @param {HTMLElement} elem - Entry element to parse and find shortcodes in
    * @param {string} one - If specified, returns only the shortcode map for the specified shortcode
    */
   parseDOM(elem, one) {
     const map = {};
     let last_section = null;
-    const children = elem instanceof NodeList ? elem : elem.children;
-    const re = /\[([\/a-z0-9\-_\s]+)\]/gi;
+    const children = elem.children;
+    const re = /\[([\/a-z0-9\-_="'\s]+)\]/gi;
     let shortcode_counter = 0;
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
@@ -401,30 +407,36 @@ Shortcodes.prototype.getTemplate = function(selector) {
   $template.removeClass(this.options.template_class);
   return $template;
 };
+Shortcodes.prototype.parseAttribute = function(attr) {
+  var res2 = {
+    name: null,
+    value: null
+  };
+  var pts = attr.split("=");
+  if (pts.length === 2) {
+    res2.name = pts[0].trim();
+    res2.value = pts[1].trim();
+  }
+  return res2;
+};
 Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
   var self = this;
-  var res2 = {
+  const res2 = {
     classes: [],
-    css: {}
+    css: {},
+    attrs: {}
   };
-  var fns = {};
-  if (descriptor.hasOwnProperty("attribute_parsers")) {
-    for (var k in descriptor.attribute_parsers) {
-      fns[k] = descriptor.attribute_parsers[k];
-    }
-  }
+  const fns = {};
   fns["header"] = function(pts2, descriptor2, attr2) {
-    var $header = null;
+    let header = null;
     if (descriptor2.hasOwnProperty("header_selector") && descriptor2.header_selector) {
-      $header = $(descriptor2.header_selector);
+      header = document.querySelector(descriptor2.header_selector);
     }
-    if ($header === null || !$header.length) {
-      $header = $("header");
-    }
-    if ($header === null || !$header.length) {
-      $header = $("body");
-    }
-    $header.addClass(pts2.join("-"));
+    if (!header)
+      document.querySelector("header");
+    if (!header)
+      document.querySelector("body");
+    header.classList.add(pts2.join("-"));
   };
   fns["placement"] = function(pts2, descriptor2, attr2) {
     if (pts2[0]) {
@@ -449,6 +461,11 @@ Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
       res2.classes.push(attr2);
     }
   };
+  if (descriptor.hasOwnProperty("attribute_parsers")) {
+    for (var k in descriptor.attribute_parsers) {
+      fns[k] = descriptor.attribute_parsers[k];
+    }
+  }
   for (var i = 0; i < attrs.length; i++) {
     var attr = attrs[i].trim().toLowerCase();
     if (/sc[0-9]+/gi.test(attr)) {
@@ -467,9 +484,10 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
   this.descriptor_index[shortcode_name] = descriptor;
   var self = this;
   this.exec_fns[shortcode_name] = function(k, attrs, val) {
-    var descriptor2 = clone(self.descriptor_index[k]);
-    var parsed_attrs = self.parseAttributes(descriptor2, attrs);
-    if (descriptor2.hasOwnProperty("pre") && descriptor2.pre) {
+    const descriptor2 = clone(self.descriptor_index[k]);
+    const parsed_attrs = self.parseAttributes(descriptor2, attrs);
+    console.log(parsed_attrs);
+    if (descriptor2.hasOwnProperty("pre") && descriptor2.pre && typeof descriptor2.pre === "function") {
       descriptor2.pre(descriptor2, attrs, val, parsed_attrs);
     }
     var $template = self.bind(descriptor2, val, parsed_attrs);
@@ -482,25 +500,24 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
   };
 };
 Shortcodes.prototype.execute = function($elem, callback) {
-  $($elem).css("visibility", "hidden");
-  var shortcode_map = this.parseDOM($elem[0]);
+  $elem.style.visibility = "hidden";
+  const shortcode_map = this.parseDOM($elem);
   for (var k in shortcode_map) {
-    var attrs = k.split(/\s+/gi);
-    var fn_name = attrs.shift();
+    const attrs = k.split(/\s+/gi);
+    const fn_name = attrs.shift();
     if (this.exec_fns.hasOwnProperty(fn_name)) {
       this.exec_fns[fn_name](fn_name, attrs, shortcode_map[k]);
     }
   }
-  $($elem).css("visibility", "visible");
-  if (callback !== void 0) {
+  $elem.style.visibility = "visible";
+  if (callback)
     callback(shortcode_map, this.exec_fns);
-  }
 };
 Shortcodes.prototype.clear = function() {
-  $(".shortcode-js").remove();
-  $(".self-anchor").remove();
+  removeAll(".shortcode-js");
+  removeAll(".self-anchor");
 };
-Shortcodes.prototype.reinit = function($elem, callback) {
+Shortcodes.prototype.reinitialize = function($elem, callback) {
   this.clear();
   this.execute($elem, callback);
 };
