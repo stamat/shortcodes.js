@@ -49,7 +49,8 @@ var Shortcodes = class {
     this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi;
     this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi;
     this.attribute_re = /(\w+)*?\s*(?:([\w\-_]+)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi;
-    this.shortcode_re = this.options = {
+    this.shortcode_re = /\[([^\[\]]+)\]/gi;
+    this.options = {
       templates: "#templates",
       template_class: "template",
       self_anchor_class: "self-anchor",

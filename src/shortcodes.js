@@ -13,7 +13,7 @@ class Shortcodes {
 		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi
 
 		this.attribute_re = /(\w+)*?\s*(?:([\w\-_]+)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi
-		this.shortcode_re = 
+		this.shortcode_re = /\[([^\[\]]+)\]/gi 
 		
 		this.options = {
 			templates: '#templates',
