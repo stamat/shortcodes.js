@@ -94,4 +94,12 @@ function removeAll(selector: string) {
   }
 }
 
+export function isFunction(o: any) {
+  return o && typeof o === 'function'
+}
+
+export function propertyIsFunction(o: any, property: string) {
+  return o.hasOwnProperty(property) && isFunction(o[property])
+}
+
 export { clone, shallowMerge, detachElement, insertBeforeElement, removeAll }

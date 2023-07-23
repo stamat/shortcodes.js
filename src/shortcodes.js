@@ -1,4 +1,4 @@
-import { clone, shallowMerge, removeAll, insertBeforeElement } from './spellbook/helpers';
+import { clone, shallowMerge, removeAll, insertBeforeElement, propertyIsFunction } from './spellbook/helpers';
 import { parseAttributes, getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
@@ -12,8 +12,6 @@ class Shortcodes {
 	
 		this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi
 		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi
-
-		this.shortcode_re = /\[([^\[\]]+)\]/gi 
 		
 		this.options = {
 			templates: '#templates',
@@ -81,7 +79,6 @@ class Shortcodes {
 	iterateNode(elem, register, self_anchor_class) {
 		const map = {}
 		const children = elem.children
-		let map_key = null
 		let last_shortcode = null
 		let shortcode_counter = 0
 
@@ -91,7 +88,7 @@ class Shortcodes {
 			
 			// check all elements for shortcodes except "pre" elements
 			if (!(child instanceof HTMLPreElement || child.querySelector('pre'))) { //only if it's not "pre" element
-				const text = child.textContent.toLowerCase().trim()
+				const text = child.textContent.trim()
 				match = getShortcodeContent(text)
 
 				// if the shortcode is not registered, treat it as a regular text
@@ -100,40 +97,40 @@ class Shortcodes {
 				}
 			}
 
-			// when the shortcode is detected
+			// when the shortcode tag is detected
 			if (match) {
 				// detect closing tag and remove it
 				if (last_shortcode && isSpecificClosingTag(match, last_shortcode.name)) {
-					map_key = null
 					last_shortcode = null
 					child.remove()
 					continue
 				}
 
 				last_shortcode = {
-					content: match,
+					tag_content: match,
 					name: getShortcodeName(match),
 					attributes: parseAttributes(match),
 					counter: shortcode_counter,
-					elements: []
+					content: [],
 				}
 				delete last_shortcode.attributes[last_shortcode.name]
+				last_shortcode.descriptor = clone(register[last_shortcode.name]) // Mutable descriptor
 
-				map_key = `${last_shortcode.name} sc${shortcode_counter}`
+				last_shortcode.uid = `${last_shortcode.name} sc${shortcode_counter}`
 				const self_anchor = this.createSelfAnchor(child, self_anchor_class, last_shortcode.name, shortcode_counter)
 
-				if (!map.hasOwnProperty(map_key)) {
-					map[map_key] = last_shortcode
+				if (!map.hasOwnProperty(last_shortcode.uid)) {
+					map[last_shortcode.uid] = last_shortcode
 					shortcode_counter++
 				}
 
-				map[map_key].elements.push(self_anchor)
+				map[last_shortcode.uid].content.push(self_anchor)
 				child.remove()
 				continue
 			}
 
-			if (map_key) {
-				map[map_key].elements.push(child)
+			if (last_shortcode.uid) {
+				map[last_shortcode.uid].content.push(child)
 			}
 		}
 
@@ -499,129 +496,96 @@ Shortcodes.prototype.getTemplate = function(selector) {
 	return $template;
 }
 
-Shortcodes.prototype.parseAttribute = function(attr) {
-	var res = {
-		name: null,
-		value: null
-	}
-
-	var pts = attr.split('=');
-
-	if (pts.length === 2) {
-		res.name = pts[0].trim();
-		res.value = pts[1].trim();
-	}
-
-	return res;
-}
-
 //TODO: what about subtag attribute parses? Check how subtags are pared?
-Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
+Shortcodes.prototype.executeAttributes = function(shortcode_obj) {
 	var self = this
-	const res = {
-		classes: [],
-		css: {},
-		attrs: {}
-	}
+	shortcode_obj.css = {}
+	shortcode_obj.classes = []
 
 	const fns = {}
 
 	//some default parsers
 
-	fns['header'] = function(pts, descriptor, attr) {
+	fns['header-classes'] = function(shortcode_obj, value) {
 		let header = null;
-		if (descriptor.hasOwnProperty('header_selector') && descriptor.header_selector) {
-			header = document.querySelector(descriptor.header_selector);
+
+		if (shortcode_obj.descriptor.hasOwnProperty('header_selector') && shortcode_obj.descriptor.header_selector) {
+			header = document.querySelector(shortcode_obj.descriptor.header_selector);
 		}
 
-		if (!header) document.querySelector('header')
-		if (!header) document.querySelector('body')
+		if (!header) header = document.querySelector('header')
+		if (!header) header = document.querySelector('body')
 
-		header.classList.add(pts.join('-'))
+		header.classList.add(value)
 	}
 
-	fns['placement'] = function(pts, descriptor, attr) {
-		if (pts[0]) {
-			if (pts[0] === 'content') {
-				descriptor.anchor = 'self';
-			} else {
-				descriptor.anchor = '.' + self.options.placement_class_prefix + '-' + pts[0];
+	fns['body-classes'] = function(shortcode_obj, value) {
+		document.querySelector('body').classList.add(value)
+	}
+
+	fns['placement'] = function(shortcode_obj, value) {
+		if (value === 'content') {
+			shortcode_obj.descriptor.anchor = 'self'
+			return
+		}
+		shortcode_obj.descriptor.anchor= '.' + self.options.placement_class_prefix + '-' + value;
+	}
+
+	fns['background-color'] = function(shortcode_obj, value) {
+		shortcode_obj.css['background-color'] = value
+	}
+
+	fns['background-image'] = function(shortcode_obj, value) {
+		shortcode_obj.css['background-image'] = `url(${value})`
+	}
+
+	fns['color'] = function(shortcode_obj, attr) {
+		shortcode_obj.css['color'] = attr
+	}
+
+	//Descriptor can carry custom attribute parsers. They can override the default ones
+	if (shortcode_obj.descriptor.hasOwnProperty('attribute_parsers')) {
+		for (var k in shortcode_obj.descriptor.attribute_parsers) {
+			if (propertyIsFunction(shortcode_obj.descriptor.attribute_parsers, k)) {
+				fns[k] = shortcode_obj.descriptor.attribute_parsers[k]
 			}
 		}
 	}
 
+	for (let key in shortcode_obj.attributes) {
+		const value = shortcode_obj.attributes[key]
 
-	//TODO: This shouldn't be so hardcode...
-	fns['background'] = function(pts, descriptor, attr) {
-		if (pts[0] && pts[0] === 'color' && pts[1]) {
-			res.css['background-color'] = '#'+pts[1]
+		if (fns.hasOwnProperty(key) && value) {
+			fns[key](shortcode_obj, value)
 		} else {
-			res.classes.push(attr);
+			shortcode_obj.classes.push(key)
 		}
 	}
 
-	fns['color'] = function(pts, descriptor, attr) {
-		if (pts[0]) {
-			res.css['color'] = pts[0]
-		} else {
-			res.classes.push(attr)
-		}
-	}
-
-	//Descriptor can carry custom attribute parsers. They can override the default ones
-	if (descriptor.hasOwnProperty('attribute_parsers')) {
-		for (var k in descriptor.attribute_parsers) {
-			fns[k] = descriptor.attribute_parsers[k]
-		}
-	}
-
-	for (var i = 0; i < attrs.length; i++) {
-		var attr = attrs[i].trim().toLowerCase()
-
-		// these are shortcode identifiers, move along
-		if (/sc[0-9]+/gi.test(attr)) {
-			continue
-		}
-
-		// TODO: 
-		var pts = attr.split('-');
-		if (pts[0] && fns.hasOwnProperty(pts[0])) {
-			fns[pts.shift()](pts, descriptor, attr);
-		} else {
-			res.classes.push(attr)
-		}
-	}
-
-	return res
+	return shortcode_obj
 }
 
 Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 	this.descriptor_index[shortcode_name] = descriptor
 	var self = this
 
-	this.exec_fns[shortcode_name] = function(k, attrs, val) {
-		const descriptor = clone(self.descriptor_index[k]);
-
-		const parsed_attrs = self.parseAttributes(descriptor, attrs);
-
-		console.log(parsed_attrs)
+	this.exec_fns[shortcode_name] = function(k, shortcode_obj) {
+		self.executeAttributes(shortcode_obj)
 
 		// execute preprocessing function
-		if (descriptor.hasOwnProperty('pre') 
-		  && descriptor.pre 
-			&& typeof descriptor.pre === 'function') {
-				descriptor.pre(descriptor, attrs, val, parsed_attrs);
+		if (propertyIsFunction(shortcode_obj.descriptor, 'pre')) {
+			shortcode_obj.descriptor.pre(shortcode_obj)
 		}
 
-		var $template = self.bind(descriptor, val, parsed_attrs);
+		var $template = self.bind(shortcode_obj.descriptor, shortcode_obj.content, shortcode_obj);
 
-		$template.addClass(parsed_attrs.classes.join(' '));
-		$template.css(parsed_attrs.css);
+		$template.addClass(shortcode_obj.classes.join(' '));
+		$template.css(shortcode_obj.css);
 		$template.addClass('shortcode-js');
 
 		//TODO: per item callback
-		if (descriptor.hasOwnProperty('callback') && descriptor.callback) {
-			descriptor.callback($template, parsed_attrs, descriptor);
+		if (propertyIsFunction(shortcode_obj.descriptor, 'callback')) {
+			shortcode_obj.descriptor.callback($template, shortcode_obj)
 		}
 	}
 }
@@ -631,12 +595,10 @@ Shortcodes.prototype.execute = function(elem, callback) {
 	const shortcode_map = this.iterateNode(elem, this.descriptor_index, this.options.self_anchor_class)
 
 	for (let k in shortcode_map) {
-		const attrs = shortcode_map[k].attributes
 		const fn_name = shortcode_map[k].name
-		const elements = shortcode_map[k].elements
 
 		if (this.exec_fns.hasOwnProperty(fn_name)) {
-			this.exec_fns[fn_name](fn_name, attrs, elements)
+			this.exec_fns[fn_name](fn_name, shortcode_map[k])
 		}
 	}
 
