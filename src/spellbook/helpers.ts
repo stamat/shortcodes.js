@@ -102,4 +102,15 @@ export function propertyIsFunction(o: any, property: string) {
   return o.hasOwnProperty(property) && isFunction(o[property])
 }
 
+export function transformDashToCamelCase(str: string) {
+  return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+}
+
+export function css(element: HTMLElement, styles: object, transform = false) {
+  for (let property in styles) {
+    if (transform) property = transformDashToCamelCase(property)
+    element.style[property] = styles[property]
+  }
+}
+
 export { clone, shallowMerge, detachElement, insertBeforeElement, removeAll }
