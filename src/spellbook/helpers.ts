@@ -94,6 +94,14 @@ function removeAll(selector: string) {
   }
 }
 
+export function getHTML(element: HTMLElement) {
+  return element.innerHTML
+}
+
+export function isElementEmpty(element: HTMLElement) {
+  return getHTML(element).trim() === ''
+}
+
 export function isFunction(o: any) {
   return o && typeof o === 'function'
 }
