@@ -1,4 +1,5 @@
 import { clone, shallowMerge, removeAll, insertBeforeElement } from './spellbook/helpers';
+import { parseAttributes, getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
 
@@ -12,7 +13,6 @@ class Shortcodes {
 		this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi
 		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi
 
-		this.attribute_re = /(\w+)*?\s*(?:([\w\-_]+)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi
 		this.shortcode_re = /\[([^\[\]]+)\]/gi 
 		
 		this.options = {
@@ -27,6 +27,13 @@ class Shortcodes {
 		}
 	}
 
+	/**
+	 * Shopify image link image size changer
+	 * 
+	 * @param {string} src 
+	 * @param {number} width 
+	 * @returns string
+	 */
 	shopifyImageLink(src, width) {
 		const pref = '$1'
 		let suf = '$2'
@@ -45,72 +52,91 @@ class Shortcodes {
 	}
 
 	/**
+	 * Creates a self anchor element used for inserting shortcode in the DOM tree where it was found
+	 * 
+	 * @param {HTMLElement} elem - Element to insert the anchor before
+	 * @param {string} custom_anchor_class - Custom class to add to the anchor if provided
+	 * @param {string} shortcode_name - Name of the shortcode, adds the shortcode-{shortcode_name} class to the anchor if provided
+	 * @param {number} counter - Counter of the shortcode, adds the sc{counter} class to the anchor if provided
+	 */
+	createSelfAnchor(elem, custom_anchor_class, shortcode_name, counter) {
+		const self_anchor = document.createElement('div')
+		const classes = []
+		if (custom_anchor_class) classes.push(custom_anchor_class)
+		if (shortcode_name) classes.push(`shortcode-${shortcode_name}`)
+		if (counter) classes.push(`sc${counter}`)
+		self_anchor.className = classes.join(' ')
+		insertBeforeElement(elem, self_anchor)
+
+		return self_anchor
+	}
+
+	/**
 	 * Finds elements between the shortcodes makes a map of all shortcodes and their containing elements
 	 * 
 	 * @param {HTMLElement} elem - Entry element to parse and find shortcodes in
-	 * @param {string} one - If specified, returns only the shortcode map for the specified shortcode
+	 * @param {object} register - Object containing all registered shortcodes, used to check if the shortcode is registered
+	 * @param {string} self_anchor_class - Class to add to the self anchor element
 	 */
-	parseDOM(elem, one) {
+	iterateNode(elem, register, self_anchor_class) {
 		const map = {}
-		let last_section = null
 		const children = elem.children
-		
-		const re = /\[([\/a-z0-9\-_="'\s]+)\]/gi // regex for detecting shortcodes
+		let map_key = null
+		let last_shortcode = null
 		let shortcode_counter = 0
 
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i]
 			let match = null
-
+			
+			// check all elements for shortcodes except "pre" elements
 			if (!(child instanceof HTMLPreElement || child.querySelector('pre'))) { //only if it's not "pre" element
 				const text = child.textContent.toLowerCase().trim()
-				match = re.exec(text)
-				
-				re.lastIndex = 0; //regex needs a reset in for loops, I always forget this
+				match = getShortcodeContent(text)
+
+				// if the shortcode is not registered, treat it as a regular text
+				if (match && !register.hasOwnProperty(getShortcodeName(match))) {
+					match = null
+				}
 			}
 
 			// when the shortcode is detected
-			if (match && match.length > 1) {
-
+			if (match) {
 				// detect closing tag and remove it
-				if (match[1].indexOf('/') === 0 
-					&& last_section 
-					&& last_section.indexOf(match[1].replace(/^\//, '')) > -1) { // if it's a closing tag of the current shortcode
-					last_section = null
+				if (last_shortcode && isSpecificClosingTag(match, last_shortcode.name)) {
+					map_key = null
+					last_shortcode = null
 					child.remove()
 					continue
 				}
 
-				last_section = `${match[1]} sc${shortcode_counter}`
-				const self_locator = document.createElement('div')
-				self_locator.className = `${this.options.self_anchor_class} shortcode-${last_section.split(/\s+/)[0]} sc${shortcode_counter}`
+				last_shortcode = {
+					content: match,
+					name: getShortcodeName(match),
+					attributes: parseAttributes(match),
+					counter: shortcode_counter,
+					elements: []
+				}
+				delete last_shortcode.attributes[last_shortcode.name]
 
-				if (!map.hasOwnProperty(last_section)) {
-					map[last_section] = []
+				map_key = `${last_shortcode.name} sc${shortcode_counter}`
+				const self_anchor = this.createSelfAnchor(child, self_anchor_class, last_shortcode.name, shortcode_counter)
+
+				if (!map.hasOwnProperty(map_key)) {
+					map[map_key] = last_shortcode
 					shortcode_counter++
 				}
 
-				insertBeforeElement(child, self_locator) 			
-				map[last_section].push(self_locator)
+				map[map_key].elements.push(self_anchor)
 				child.remove()
-
 				continue
 			}
 
-			if (last_section) {
-				map[last_section].push(child)
-			}
-
-			if (one && last_section !== one) {
-				if (map.hasOwnProperty(one)) {
-					return map[one]
-				}
+			if (map_key) {
+				map[map_key].elements.push(child)
 			}
 		}
 
-		if (one && map.hasOwnProperty(one)) {
-			return map[one]
-		}
 		return map
 	}
 }
@@ -186,7 +212,7 @@ Shortcodes.prototype.sortDOM = function(descriptor, val) {
 		var $item = $(val[i]);
 
 		//XXX: ??? did we stop using this? this might be a part of legacy code
-		if ($item.hasClass('self-anchor')) {
+		if ($item.hasClass(this.options.self_anchor_class)) {
 			// find yourself in this confusion
 			if (descriptor.anchor === 'self') {
 				descriptor.anchor = $item;
@@ -570,8 +596,8 @@ Shortcodes.prototype.parseAttributes = function(descriptor, attrs) {
 }
 
 Shortcodes.prototype.register = function(shortcode_name, descriptor) {
-	this.descriptor_index[shortcode_name] = descriptor;
-	var self = this;
+	this.descriptor_index[shortcode_name] = descriptor
+	var self = this
 
 	this.exec_fns[shortcode_name] = function(k, attrs, val) {
 		const descriptor = clone(self.descriptor_index[k]);
@@ -597,23 +623,24 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 		if (descriptor.hasOwnProperty('callback') && descriptor.callback) {
 			descriptor.callback($template, parsed_attrs, descriptor);
 		}
-	};
-};
+	}
+}
 
-Shortcodes.prototype.execute = function($elem, callback) {
-	$elem.style.visibility = 'hidden'
-	const shortcode_map = this.parseDOM($elem)
+Shortcodes.prototype.execute = function(elem, callback) {
+	elem.style.visibility = 'hidden'
+	const shortcode_map = this.iterateNode(elem, this.descriptor_index, this.options.self_anchor_class)
 
-	for (var k in shortcode_map) {
-		const attrs = k.split(/\s+/gi)
-
-		const fn_name = attrs.shift()
+	for (let k in shortcode_map) {
+		const attrs = shortcode_map[k].attributes
+		const fn_name = shortcode_map[k].name
+		const elements = shortcode_map[k].elements
 
 		if (this.exec_fns.hasOwnProperty(fn_name)) {
-			this.exec_fns[fn_name](fn_name, attrs, shortcode_map[k]);
+			this.exec_fns[fn_name](fn_name, attrs, elements)
 		}
 	}
-	$elem.style.visibility = 'visible'
+
+	elem.style.visibility = 'visible'
 	if (callback) callback(shortcode_map, this.exec_fns)
 }
 
