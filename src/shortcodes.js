@@ -1,4 +1,4 @@
-import { clone, shallowMerge, removeAll, insertBeforeElement, propertyIsFunction, css, isElementEmpty } from './spellbook/helpers';
+import { clone, shallowMerge, removeAll, insertBeforeElement, propertyIsFunction, css, isElementEmpty, decodeHTML } from './spellbook/helpers';
 import { parseAttributes, getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
@@ -87,7 +87,7 @@ class Shortcodes {
 			
 			// check all elements for shortcodes except "pre" elements
 			if (!(child instanceof HTMLPreElement || child.querySelector('pre'))) { //only if it's not "pre" element
-				const text = child.textContent.trim()
+				const text = htmlDecode(child.textContent.trim())
 				match = getShortcodeContent(text)
 
 				// if the shortcode is not registered, treat it as a regular text
@@ -411,13 +411,13 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 }
 
 Shortcodes.prototype.construct = function(shortcode_obj) {
-	var $template = null;
+	let $template = null;
 
 	if (shortcode_obj.descriptor.hasOwnProperty('template')) {
 		$template = $(this.getTemplate(shortcode_obj.descriptor.template));
 	}
 	
-	var sorted = this.sortDOM(shortcode_obj);
+	const sorted = this.sortDOM(shortcode_obj);
 
 	if (shortcode_obj.descriptor.hasOwnProperty('item_template')) {
 		for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {

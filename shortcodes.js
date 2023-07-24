@@ -180,7 +180,7 @@ var Shortcodes = class {
       const child = children[i];
       let match = null;
       if (!(child instanceof HTMLPreElement || child.querySelector("pre"))) {
-        const text = child.textContent.trim();
+        const text = htmlDecode(child.textContent.trim());
         match = getShortcodeContent(text);
         if (match && !register.hasOwnProperty(getShortcodeName(match))) {
           match = null;
@@ -425,11 +425,11 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
   }
 };
 Shortcodes.prototype.construct = function(shortcode_obj) {
-  var $template = null;
+  let $template = null;
   if (shortcode_obj.descriptor.hasOwnProperty("template")) {
     $template = $(this.getTemplate(shortcode_obj.descriptor.template));
   }
-  var sorted = this.sortDOM(shortcode_obj);
+  const sorted = this.sortDOM(shortcode_obj);
   if (shortcode_obj.descriptor.hasOwnProperty("item_template")) {
     for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
       var $item_template = $(this.getTemplate(shortcode_obj.descriptor.item_template));

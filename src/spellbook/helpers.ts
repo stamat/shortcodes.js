@@ -106,12 +106,20 @@ export function isFunction(o: any) {
   return o && typeof o === 'function'
 }
 
+export function decodeHTML(html: string) {
+  const txt = document.createElement('textarea')
+  txt.innerHTML = html
+  const res = txt.value
+  txt.remove()
+  return res
+}
+
 export function propertyIsFunction(o: any, property: string) {
   return o.hasOwnProperty(property) && isFunction(o[property])
 }
 
 export function transformDashToCamelCase(str: string) {
-  return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
+  return str.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase() });
 }
 
 export function css(element: HTMLElement, styles: object, transform = false) {
