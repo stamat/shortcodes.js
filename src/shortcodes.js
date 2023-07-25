@@ -434,7 +434,6 @@ Shortcodes.prototype.construct = function(shortcode_obj) {
 				}
 			}
 
-			// ❗️ Careful, we will need multiple destinations for everything we append
 			const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template.querySelectorAll(shortcode_obj.descriptor.item_anchor) : document.querySelectorAll(descriptor.anchor)
 			this.bindFunction(item_template, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj, i)
 		}
@@ -582,6 +581,42 @@ Shortcodes.prototype.bindFunction = function(source, destination, function_name,
 			}
 		}
 	}
+}
+
+Shortcodes.prototype.extract = function(element, properties) {
+	if (typeof element === 'string') element = querySingle(element)
+
+	if (typeof properties === 'string') properties = [properties]
+
+	const result = {}
+	const resultArr = []
+
+	for (let i = 0; i < properties.length; i++) {
+		if (properties[i] === 'html') {
+			result.html = element.innerHTML
+			resultArr.push(element.innerHTML)
+			continue
+		}
+
+		if (properties[i] === 'text') {
+			result.text = element.textContent
+			resultArr.push(element.textContent)
+			continue
+		}
+
+		if (properties[i] === 'text') {
+			result.self = element
+			resultArr.push(element)
+			continue
+		}
+
+		result[properties[i]] = element.getAttribute(properties[i])
+		resultArr.push(element.getAttribute(properties[i]))
+	}
+
+	if (resultArr.length === 1) return resultArr[0]
+
+	return result
 }
 
 class Shortcode {
