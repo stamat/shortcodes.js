@@ -1,5 +1,5 @@
-import { clone, shallowMerge, removeAll, insertBeforeElement, propertyIsFunction, css, isElementEmpty, decodeHTML } from './spellbook/helpers';
-import { parseAttributes, getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
+import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, parseAttributes, isEmptyElement, decodeHTML } from './book-of-spells/index.mjs';
+import { getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
 
@@ -87,7 +87,7 @@ class Shortcodes {
 			
 			// check all elements for shortcodes except "pre" elements
 			if (!(child instanceof HTMLPreElement || child.querySelector('pre'))) { //only if it's not "pre" element
-				const text = htmlDecode(child.textContent.trim())
+				const text = decodeHTML(child.textContent.trim())
 				match = getShortcodeContent(text)
 
 				// if the shortcode is not registered, treat it as a regular text
@@ -206,7 +206,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 		}
 
 		//if the contents are empty, with exclusion of images
-		if (!item.matches('img') && isElementEmpty(item)) continue
+		if (!item.matches('img') && isEmptyElement(item)) continue
 
 		let green_flag = false // ⬇🇸🇦 if true, the iteration is over? (copilot said this not me) 
 
@@ -302,11 +302,11 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 		}
 	}
 
-	return {	elements: elements,
-				item_tags: item_tags,
-				first_element_key: first_element_key,
-				last_element_key: last_element_key,
-				max_element_key: max_element_key
+	return { elements: elements,
+		item_tags: item_tags,
+		first_element_key: first_element_key,
+		last_element_key: last_element_key,
+		max_element_key: max_element_key
 	}
 }
 
@@ -533,8 +533,8 @@ Shortcodes.prototype.execute = function(elem, callback) {
 }
 
 Shortcodes.prototype.clear = function() {
-	removeAll('.shortcode-js')
-	removeAll('.self-anchor')
+	remove('.shortcode-js')
+	remove('.self-anchor')
 }
 
 Shortcodes.prototype.reinitialize = function($elem, callback) {

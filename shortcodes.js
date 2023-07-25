@@ -1,71 +1,6 @@
 /* shortcodes.js v1.0.0 | https://github.com/stamat/shortcodes.js | MIT License */
 
-// src/spellbook/helpers.ts
-function shallowMerge(target, source) {
-  for (const key in source) {
-    target[key] = source[key];
-  }
-}
-function _cloneObject(o) {
-  let res2 = {};
-  for (const i in o) {
-    res2[i] = clone(o[i]);
-  }
-  return res2;
-}
-function _cloneArray(a) {
-  let res2 = [];
-  for (var i = 0; i < a.length; i++) {
-    res2[i] = clone(a[i]);
-  }
-  return res2;
-}
-function clone(o) {
-  let res2 = null;
-  if (Array.isArray(o)) {
-    res2 = _cloneArray(o);
-  } else if (typeof o === "object" && o !== null) {
-    res2 = _cloneObject(o);
-  } else {
-    res2 = o;
-  }
-  return res2;
-}
-function insertBeforeElement(targetElement, newElement) {
-  var _a;
-  (_a = targetElement.parentNode) == null ? void 0 : _a.insertBefore(newElement, targetElement);
-}
-function removeAll(selector) {
-  for (const element of document.querySelectorAll(selector)) {
-    element.remove();
-  }
-}
-function getHTML(element) {
-  return element.innerHTML;
-}
-function isElementEmpty(element) {
-  return getHTML(element).trim() === "";
-}
-function isFunction(o) {
-  return o && typeof o === "function";
-}
-function propertyIsFunction(o, property) {
-  return o.hasOwnProperty(property) && isFunction(o[property]);
-}
-function transformDashToCamelCase(str) {
-  return str.replace(/-([a-z])/g, function(g) {
-    return g[1].toUpperCase();
-  });
-}
-function css(element, styles, transform = false) {
-  for (let property in styles) {
-    if (transform)
-      property = transformDashToCamelCase(property);
-    element.style[property] = styles[property];
-  }
-}
-
-// src/lib/parsers.js
+// src/book-of-spells/src/parsers.mjs
 function parseAttributes(str) {
   const re = /\s*(?:([a-z_]{1}[a-z0-9\-_]*)=?(?:"([^"]+)"|'([^']+)')*)\s*/gi;
   const reWithoutValue = /^\s*([a-z_]{1}[a-z0-9\-_]*)\s*$/i;
@@ -90,6 +25,88 @@ function parseAttributes(str) {
   }
   return res2;
 }
+
+// src/book-of-spells/src/helpers.mjs
+function shallowMerge(target, source) {
+  for (const key in source) {
+    target[key] = source[key];
+  }
+}
+function clone(o) {
+  let res2 = null;
+  if (isArray(o)) {
+    res2 = [];
+    for (const i in o) {
+      res2[i] = clone(o[i]);
+    }
+  } else if (isObject(o)) {
+    res2 = {};
+    for (const i in o) {
+      res2[i] = clone(o[i]);
+    }
+  } else {
+    res2 = o;
+  }
+  return res2;
+}
+function isObject(o) {
+  return typeof o === "object" && !Array.isArray(o) && o !== null;
+}
+function isArray(o) {
+  return Array.isArray(o);
+}
+function isFunction(o) {
+  return typeof o === "function";
+}
+function propertyIsFunction(obj, propertyName) {
+  return obj.hasOwnProperty(propertyName) && isFunction(obj[propertyName]);
+}
+function transformDashToCamelCase(str) {
+  return str.replace(/-([a-z])/g, function(g) {
+    return g[1].toUpperCase();
+  });
+}
+
+// src/book-of-spells/src/dom.mjs
+function isEmptyElement(element) {
+  return element.innerHTML.trim() === "";
+}
+function remove(selector) {
+  const elements = query(selector);
+  for (const element of elements) {
+    element.remove();
+  }
+}
+function query(selector) {
+  if (selector instanceof Array)
+    return selector;
+  if (selector instanceof Element)
+    return [selector];
+  return document.querySelectorAll(selector);
+}
+function css(element, styles, transform = false) {
+  if (!element || !styles)
+    return;
+  for (let property in styles) {
+    if (transform)
+      property = transformDashToCamelCase(property);
+    element.style[property] = styles[property];
+  }
+}
+function decodeHTML(html) {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  const res2 = txt.value;
+  txt.remove();
+  return res2;
+}
+function insertBeforeElement(targetElement, newElement) {
+  if (!targetElement || !newElement)
+    return;
+  targetElement.parentNode.insertBefore(newElement, targetElement);
+}
+
+// src/lib/parsers.js
 function getShortcodeContent(str) {
   const re = /\[([^\[\]]+)\]/i;
   const match = str.match(re);
@@ -180,7 +197,7 @@ var Shortcodes = class {
       const child = children[i];
       let match = null;
       if (!(child instanceof HTMLPreElement || child.querySelector("pre"))) {
-        const text = htmlDecode(child.textContent.trim());
+        const text = decodeHTML(child.textContent.trim());
         match = getShortcodeContent(text);
         if (match && !register.hasOwnProperty(getShortcodeName(match))) {
           match = null;
@@ -266,7 +283,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
         descriptor2.anchor = item;
       continue;
     }
-    if (!item.matches("img") && isElementEmpty(item))
+    if (!item.matches("img") && isEmptyElement(item))
       continue;
     let green_flag = false;
     if (descriptor2.hasOwnProperty("item_template")) {
@@ -527,8 +544,8 @@ Shortcodes.prototype.execute = function(elem, callback) {
     callback(shortcode_map, this.exec_fns);
 };
 Shortcodes.prototype.clear = function() {
-  removeAll(".shortcode-js");
-  removeAll(".self-anchor");
+  remove(".shortcode-js");
+  remove(".self-anchor");
 };
 Shortcodes.prototype.reinitialize = function($elem, callback) {
   this.clear();
