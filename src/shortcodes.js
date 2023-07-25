@@ -1,4 +1,4 @@
-import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, parseAttributes, isEmptyElement, decodeHTML } from './book-of-spells/index.mjs';
+import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, parseAttributes, isEmptyElement, decodeHTML, query, isFunction } from './book-of-spells/index.mjs';
 import { getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
@@ -411,71 +411,59 @@ Shortcodes.prototype.executeProperties = function($item, $dest, props, descripto
 }
 
 Shortcodes.prototype.construct = function(shortcode_obj) {
-	let $template = null;
+	let template = null;
 
 	if (shortcode_obj.descriptor.hasOwnProperty('template')) {
-		$template = $(this.getTemplate(shortcode_obj.descriptor.template));
+		template = this.getTemplate(shortcode_obj.descriptor.template)
 	}
 	
 	const sorted = this.sortDOM(shortcode_obj);
 
 	if (shortcode_obj.descriptor.hasOwnProperty('item_template')) {
-		for (var i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
-			var $item_template = $(this.getTemplate(shortcode_obj.descriptor.item_template));
+		for (let i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
+			const item_template = this.getTemplate(shortcode_obj.descriptor.item_template)
 			if (sorted.item_tags[i]) {
-				$item_template.addClass(sorted.item_tags[i]);
+				item_template.classList.add(sorted.item_tags[i])
 			}
 
-			for (var k in shortcode_obj.descriptor.elements) {
-				var props = shortcode_obj.descriptor.elements[k];
+			for (const k in shortcode_obj.descriptor.elements) {
+				var props = shortcode_obj.descriptor.elements[k]
 				if (sorted.elements[k][i]) { //if the element exists, may be an uneven number
-					var $item = $(sorted.elements[k][i]);
-					this.executeProperties($item, $item_template, props, shortcode_obj.descriptor, i);
+					const item = sorted.elements[k][i]
+					this.executeProperties($(item), $(item_template), props, shortcode_obj.descriptor, i)
 				}
 			}
 
-			var $dest = shortcode_obj.descriptor.hasOwnProperty('template') ? $template.find(shortcode_obj.descriptor.item_anchor) : $(descriptor.anchor);
-			if (typeof shortcode_obj.descriptor.bind_fn === 'function') {
-				shortcode_obj.descriptor.bind_fn($item_template, $dest, shortcode_obj.descriptor, shortcode_obj, i);
-			} else {
-				$dest[shortcode_obj.descriptor.bind_fn]($item_template);
-			}
+			// ❗️ Careful, we will need multiple destinations for everything we append
+			const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template.querySelectorAll(shortcode_obj.descriptor.item_anchor) : document.querySelectorAll(descriptor.anchor)
+			this.bindFunction(item_template, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj, i)
 		}
 	} else {
 		if (shortcode_obj.descriptor.hasOwnProperty('elements')) {
-			for (var k in shortcode_obj.descriptor.elements) {
-				var props = shortcode_obj.descriptor.elements[k];
+			for (const k in shortcode_obj.descriptor.elements) {
+				var props = shortcode_obj.descriptor.elements[k]
 
 				if (sorted.elements.hasOwnProperty(k)) {
-					for (var i = 0; i < sorted.elements[k].length; i++) {
-						var $item = $(sorted.elements[k][i]);
-						var $dest = shortcode_obj.descriptor.hasOwnProperty('template') ? $template : $(shortcode_obj.descriptor.anchor);
-						this.executeProperties($item, $dest, props, shortcode_obj.descriptor, i);
+					for (let i = 0; i < sorted.elements[k].length; i++) {
+						const item = sorted.elements[k][i]
+						const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template : document.querySelectorAll(shortcode_obj.descriptor.anchor)
+						this.executeProperties($(item), $(dest), props, shortcode_obj.descriptor, i);
 					}
 				}
 			}
 		} else {
-			var $dest = shortcode_obj.descriptor.hasOwnProperty('template') ? $template : $(shortcode_obj.descriptor.anchor);
-			if (typeof shortcode_obj.descriptor.bind_fn === 'function') {
-				shortcode_obj.descriptor.bind_fn(sorted.elements.rest, $dest, shortcode_obj.descriptor, shortcode_obj);
-			} else {
-				if (propertyIsFunction($dest, shortcode_obj.descriptor.bind_fn))
-					$dest[shortcode_obj.descriptor.bind_fn](sorted.elements.rest)
-			}
+			const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template : document.querySelectorAll(shortcode_obj.descriptor.anchor)
+			this.bindFunction(sorted.elements.rest, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj)
 		}
 	}
 
 	if (shortcode_obj.descriptor.hasOwnProperty('template')) {
-		if (typeof shortcode_obj.descriptor.bind_fn === 'function') {
-			shortcode_obj.descriptor.bind_fn($template, $(document.querySelector(shortcode_obj.descriptor.anchor)), shortcode_obj.descriptor, shortcode_obj);
-		} else {
-			$(shortcode_obj.descriptor.anchor)[shortcode_obj.descriptor.bind_fn]($template);
-		}
-		return $template[0];
+		this.bindFunction(template, shortcode_obj.descriptor.anchor, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj)
+		return template
 	}
 
-	return document.querySelector(shortcode_obj.descriptor.anchor);
-};
+	return document.querySelector(shortcode_obj.descriptor.anchor)
+}
 
 Shortcodes.prototype.getTemplate = function(selector) {
 	selector = [selector]
@@ -512,7 +500,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 		
 		//TODO: per item callback
 		if (propertyIsFunction(shortcode_obj.descriptor, 'callback')) {
-			shortcode_obj.descriptor.callback($(template), shortcode_obj)
+			shortcode_obj.descriptor.callback(template, shortcode_obj)
 		}
 	}
 }
@@ -540,6 +528,60 @@ Shortcodes.prototype.clear = function() {
 Shortcodes.prototype.reinitialize = function($elem, callback) {
 	this.clear()
 	this.execute($elem, callback)
+}
+
+Shortcodes.prototype.bindFunction = function(source, destination, function_name, property_name, payload, additional_payload) {
+	if (typeof destination === 'string') destination = query(destination)
+	else if (destination instanceof HTMLElement) destination = [destination]
+
+	if (typeof source === 'string') source = query(source)
+	else if (source instanceof HTMLElement) source = [source]
+
+	if (isFunction(function_name)) {
+		function_name(source, destination, property_name, payload, additional_payload)
+		return
+	}
+
+	const fns = {}
+
+	fns['css'] = function(source, destination, property_name, payload, additional_payload) {
+		if (typeof property_name === 'string') property_name = [property_name]
+
+		for (let i = 0; i < property_name.length; i++) {
+			const propCamelCase = transformDashToCamelCase(property_name[i])
+			destination.style[propCamelCase] = source.style[propCamelCase]
+		}
+	}
+
+	fns['html'] = function(source, destination, property_name, payload, additional_payload) {
+		destination.innerHTML = source.innerHTML
+	}
+
+	fns['text'] = function(source, destination, property_name, payload, additional_payload) {
+		destination.textContent = source.textContent
+	}
+
+	fns['prepend'] = function(source, destination, property_name, payload, additional_payload) {
+		if (destination.firstChild) {
+			destination.insertBefore(source, destination.firstChild)
+		} else {
+			destination.appendChild(source)
+		}
+	}
+
+	fns['append'] = function(source, destination, property_name, payload, additional_payload) {
+		destination.appendChild(source)
+	}
+
+	if (destination.length) {
+		for (let i = 0; i < destination.length; i++) {
+			for (let j = 0; j < source.length; j++) {
+				if (fns.hasOwnProperty(function_name)) {
+					fns[function_name](source[j], destination[i], property_name, payload, additional_payload)
+				}
+			}
+		}
+	}
 }
 
 class Shortcode {

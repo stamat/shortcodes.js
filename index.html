@@ -200,8 +200,8 @@ rest: {
       anchor: '.shortcode-landing',
       bind_fn: 'append',
       template: 'section.hero',
-      callback: function($template) {
-        $template.find('.down').on('click', function(e) {
+      callback: function(template) {
+        $(template).find('.down').on('click', function(e) {
           e.preventDefault();
 
           $('.container').animate({
@@ -308,8 +308,8 @@ bind_fn: 'append',
 template: 'section.carousel',
 item_template: '.carousel-item',
 item_anchor: '.slides-landing',
-callback: function($template) {
-$template.find('.slides').slick({
+callback: function(template) {
+$(template).find('.slides').slick({
   slidesToShow: 3,
   slidesToScroll: 1,
   dots: true,
@@ -384,9 +384,9 @@ rest: {
       template: 'section.carousel',
       item_template: '.carousel-item',
       item_anchor: '.slides-landing',
-      callback: function($template) {
+      callback: function(template) {
         $('section.carousel').first().attr('id', 'main');
-        $template.find('.slides').not('.slick-initialized').slick({
+        $(template).find('.slides').not('.slick-initialized').slick({
           slidesToShow: 3,
             slidesToScroll: 1,
           dots: true,
@@ -497,8 +497,8 @@ rest: {
       anchor: '.shortcode-landing',
       bind_fn: 'append',
       template: 'section.text',
-      callback: function($template) {
-        $template.find('.text-landing pre').each(function() {
+      callback: function(template) {
+        $(template).find('.text-landing pre').each(function() {
           $(this).html( '<code class="language-html">' + $(this).html() + '</code>');
         });
       },
