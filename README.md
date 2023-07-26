@@ -1,4 +1,4 @@
-# shortcodes.js v1.0.1
+# shortcodes.js [![npm version](https://img.shields.io/npm/v/shortcodes.js)](https://www.npmjs.com/package/shortcodes.js)
 Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.
 
 Being completely frontend solution means there will be some CLS, or the page will flicker on initial load, but it's a small price to pay for the flexibility and ease of use.
