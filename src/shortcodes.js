@@ -1,14 +1,11 @@
-import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, parseAttributes, isEmptyElement, decodeHTML, query, isFunction, hasOwnProperties, isObject, propertyIsString, isArray, transformDashToCamelCase, matchesAll, isString } from './book-of-spells/index.mjs';
-import { getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
+import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, isEmptyElement, decodeHTML, query, isFunction, hasOwnProperties, isObject, propertyIsString, isArray, transformDashToCamelCase, matchesAll, isString } from 'book-of-spells'
+import { getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers'
+import { Shortcode } from './lib/Shortcode'
 
-//TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
-
-//TODO: decide if jQuery is really necessary
-
-class Shortcodes {
+export class Shortcodes {
 	constructor(options) {
-		this.descriptor_index = {};
-		this.exec_fns = {};
+		this.descriptor_index = {}
+		this.exec_fns = {}
 	
 		this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi
 		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi
@@ -133,7 +130,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 	const descriptor = shortcode_obj.descriptor
 	const content = shortcode_obj.content
 	
-	const reSubtag = /^\s*\{\s*([a-z0-9\-_\s]+)\s*\}\s*$/gi; //subtag attributes. I guess subtags are used for item ("slide") delimiters
+	const reSubtag = /^\s*\{\s*([a-z0-9\-_\s]+)\s*\}\s*$/gi //subtag attributes. I guess subtags are used for item ("slide") delimiters
 
 	const item_tags = [] //collects attributes per "slide"
 	const elements = {} //sorted DOM per tag name
@@ -169,7 +166,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 	//clone temp memo_block
 	// Memo block is used to check if all the elements are found. If not, the cycle is reset and the rest of the elements are packaged in arrays? (by copilot)
 	function newMemoBlock() {
-		res = {};
+		res = {}
 		for (const k in memo_block_template) {
 			res[k] = true
 		}
@@ -232,7 +229,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 			for (const k in other_than_rest) {
 
 				if (elements[k].length === descriptor.elements[k].count) { //if the count of elements reatches set count skip iteration
-					continue;
+					continue
 				}
 
 				//❗️XXX: this is a temporary and very bad solution | this was written to be able to use images inside the ul/li as secondary images //XXX: WHAT IS THE USE CASE???
@@ -286,7 +283,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 
 	// calculate which element has the most entries = number of slides
 	// this will be used as a slide delimiter later on
-	let max_count = null;
+	let max_count = null
 
 	for (const k in other_than_rest) {
 		var c = elements[k].length
@@ -349,13 +346,13 @@ Shortcodes.prototype.constructElements = function(item, dest, props, shortcode_o
 }
 
 Shortcodes.prototype.construct = function(shortcode_obj) {
-	let template = null;
+	let template = null
 
 	if (shortcode_obj.descriptor.hasOwnProperty('template')) {
 		template = this.getTemplate(shortcode_obj.descriptor.template)
 	}
 	
-	const sorted = this.sortDOM(shortcode_obj);
+	const sorted = this.sortDOM(shortcode_obj)
 
 	if (shortcode_obj.descriptor.hasOwnProperty('item_template')) {
 		for (let i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
@@ -384,7 +381,7 @@ Shortcodes.prototype.construct = function(shortcode_obj) {
 					for (let i = 0; i < sorted.elements[k].length; i++) {
 						const item = sorted.elements[k][i]
 						const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template : document.querySelectorAll(shortcode_obj.descriptor.anchor)
-						this.constructElements(item, dest, props, shortcode_obj, i);
+						this.constructElements(item, dest, props, shortcode_obj, i)
 					}
 				}
 			}
@@ -431,7 +428,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 
 		if (template) {
 			if (shortcode_obj.classes.length) template.classList.add(shortcode_obj.classes.join(' '))
-			css(template, shortcode_obj.css);
+			css(template, shortcode_obj.css)
 			template.classList.add('shortcode-js')
 		}
 		
@@ -650,90 +647,4 @@ Shortcodes.prototype.extract = function(element, properties) {
 	return result
 }
 
-class Shortcode {
-	constructor(tag_content, descriptor, counter, opts) {
-		const name = getShortcodeName(tag_content)
-		const attributes = parseAttributes(tag_content)
-		delete attributes[name]
-
-		this.tag_content = tag_content
-		this.uid = `${name}-sc-${counter}`
-		this.name = name
-		this.attributes = attributes
-		this.descriptor = clone(descriptor)
-		this.content = []
-		this.counter = counter
-		this.classes = []
-		this.css = {}
-		this.options = {
-			placement_class_prefix: 'shortcode-landing',
-		}
-
-		if (opts) {
-			shallowMerge(this.options, opts)
-		}
-	}
-
-	executeAttributes() {
-		var self = this
-		const fns = {}
-
-		fns['header-class'] = function(shortcode_obj, value) {
-			let header = null
-
-			if (shortcode_obj.descriptor.hasOwnProperty('header_selector') && shortcode_obj.descriptor.header_selector) {
-				header = document.querySelector(shortcode_obj.descriptor.header_selector);
-			}
-
-			if (!header) header = document.querySelector('header')
-			if (!header) header = document.querySelector('body')
-
-			header.classList.add(value)
-		}
-
-		fns['body-class'] = function(shortcode_obj, value) {
-			document.querySelector('body').classList.add(value)
-		}
-
-		fns['placement'] = function(shortcode_obj, value) {
-			if (value === 'content') {
-				shortcode_obj.descriptor.anchor = 'self'
-				return
-			}
-			shortcode_obj.descriptor.anchor= '.' + self.options.placement_class_prefix + '-' + value;
-		}
-
-		fns['background-color'] = function(shortcode_obj, value) {
-			shortcode_obj.css['backgroundColor'] = value
-		}
-
-		fns['background-image'] = function(shortcode_obj, value) {
-			shortcode_obj.css['backgroundImage'] = `url(${value})`
-		}
-
-		fns['color'] = function(shortcode_obj, attr) {
-			shortcode_obj.css['color'] = attr
-		}
-
-		//Descriptor can carry custom attribute parsers. They can override the default ones
-		if (this.descriptor.hasOwnProperty('attribute_parsers')) {
-			for (const k in this.descriptor.attribute_parsers) {
-				if (propertyIsFunction(this.descriptor.attribute_parsers, k)) {
-					fns[k] = this.descriptor.attribute_parsers[k]
-				}
-			}
-		}
-
-		for (const key in this.attributes) {
-			const value = this.attributes[key]
-
-			if (fns.hasOwnProperty(key) && value) {
-				fns[key](this, value)
-			} else {
-				this.classes.push(key)
-			}
-		}
-
-		return this
-	}
-}
+export default Shortcodes

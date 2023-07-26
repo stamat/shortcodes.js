@@ -1,12 +1,12 @@
 {
   "scripts": [{
-    "in": "src/shortcodes.js",
+    "in": "src/index.js",
     "out": "shortcodes.js",
     "options": {
       "sourcemap": true,
       "minify": true,
       "justMinified": false,
-      "format": "esm",
+      "format": "iife",
       "target": "es2019",
       "mangle": true
     }
