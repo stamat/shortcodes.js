@@ -1,11 +1,14 @@
 {
   "name": "shortcodes.js",
   "description": "JavaScript Front-end Shortcode Engine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage": "https://github.com/stamat/shortcodes.js",
   "main": "shortcodes.js",
   "license": "MIT",
-  "dependencies": {
-    "poops": "^1.0.7"
+  "devDependencies": {
+    "poops": "^1.0.7",
+    "esm": "^3.2.25",
+    "jest": "^29.6.1",
+    "jest-environment-jsdom": "^29.6.1"
   }
 }
