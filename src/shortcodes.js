@@ -1,4 +1,4 @@
-import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, parseAttributes, isEmptyElement, decodeHTML, query, isFunction } from './book-of-spells/index.mjs';
+import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, parseAttributes, isEmptyElement, decodeHTML, query, isFunction, hasOwnProperties, isObject, propertyIsString, isArray, transformDashToCamelCase, matchesAll, isString } from './book-of-spells/index.mjs';
 import { getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers';
 
 //TODO: THIS SHIT NEEDS A HEAVY REWRITE!!! YOU LAZY ASS!
@@ -310,103 +310,41 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 	}
 }
 
-//TODO: simplify with declarative programming
-Shortcodes.prototype.executeProperties = function($item, $dest, props, descriptor, num) {
-	//$item = $($item);
+Shortcodes.prototype.constructElements = function(item, dest, props, shortcode_obj, num) {
+	const descriptor = shortcode_obj.descriptor
 	// Extract DOM attributes
-	if (props.extract_fn === 'attr') {
-		if (typeof props.extract_attr === 'string') {
-			extract = $item[props.extract_fn](props.extract_attr);
+	const extracted = props.extract ? this.extract(item, props.extract) : null
 
-			if ($item.is('img') && props.extract_attr === 'src') {
-				if (extract && this.shopify_img_re.test(extract)) {
-					extract = extract.replace(this.shopify_img_re, '$1$3');
-				}
-			}
-		} else { // if it has multiple attributes to extract, like alt image -> for binding use custom function
-			extract = [];
-			for (var j = 0; j < props.extract_attr.length; j++) {
-				if (props.extract_attr[j] === 'html') {
-					extract.push($item.html());
-					continue;
-				}
+	if (!extracted) return
 
-				if ($item.is('img') && props.extract_attr[j] === 'src') {
-					var src = $item.attr('src');
-					if (src && this.shopify_img_re.test(src)) {
-						extract.push(src.replace(this.shopify_img_re, '$1$3'));
-						continue;
-					}
-				}
-				var attr = props.extract_attr[j];
-				extract.push($item[props.extract_fn](attr));
-			}
+	console.log(item)
+	// TODO: this should be optional, if the option for shopify is set do this.
+	if (matchesAll(item, 'img') && extracted.hasOwnProperty('src')) {
+		if (this.shopify_img_re.test(extracted.src)) {
+			extracted.src = extracted.src.replace(this.shopify_img_re, '$1$3')
 		}
-	// Extract DOM
-	} else if (props.extract_fn === 'self') {
-		extract = $item;
-	// Extract with jQuery function
+	}
+
+	if (propertyIsFunction(props, 'parse_extracted')) {
+		props.parse(extracted, item, dest, props, shortcode_obj, num)
+	} else if (propertyIsString(props, 'parse_extracted') && propertyIsFunction(window, props.parse_extracted)) {
+		window[props.parse_extracted](extracted, item, dest, props, shortcode_obj, num)
+	}
+
+	if (!props.hasOwnProperty('bind_extracted')) return
+	if (!isArray(props.bind_extracted)) props.bind_extracted = [props.bind_extracted]
+
+	if (props.hasOwnProperty('anchor_element')) {
+		finalDestination = query(props.anchor, dest)
 	} else {
-		extract = $item[props.extract_fn]();
+		finalDestination = query(props.anchor, descriptor.anchor)
 	}
 
-	//TODO: should be extract_fn typeof function
-	if (props.hasOwnProperty('parse')) {
-		if (typeof props.parse === 'function') {
-			extract = props.parse(extract);  //execute custom extract parsing function
-		} else {
-			if (window.hasOwnProperty(props.parse)) {
-				extract = window[props.parse](extract);
-			}
-		}
-	}
+	if (!finalDestination.length && dest.matches(props.anchor)) finalDestination = dest
+	if (finalDestination instanceof Element) finalDestination = [finalDestination]
 
-	if (props.bind_fn === 'css'
-		&& props.hasOwnProperty('bind_property')
-		&& props.bind_property === 'background-image') {
-		extract  = 'url(' + extract + ')';
-	} else if (typeof props.bind_fn === 'function') {
-		props.bind_fn(extract, $dest, props, descriptor, num); //execute custom bind function
-		return;
-	}
-
-	//do some auto binding
-	switch (props.anchor_element) {
-		case 'item':
-			$target = $dest.find(props.anchor);
-			if ($dest.is(props.anchor) && $target.length === 0) {
-				$target = $dest;
-			}
-
-			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-				$target[props.bind_fn](props.bind_property, extract);
-			} else {
-				$target[props.bind_fn](extract);
-			}
-			break;
-		case 'template':
-			$target = $dest.find(props.anchor);
-			if ($dest.is(props.anchor) && $target.length === 0) {
-				$target = $dest;
-			}
-
-			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-				$target[props.bind_fn](props.bind_property, extract);
-			} else {
-				$target[props.bind_fn](extract);
-			}
-			break;
-		default:
-			$target = $(descriptor.anchor).find(props.anchor);
-			if ($(descriptor.anchor).is(props.anchor) && $target.length === 0) {
-				$target = $(descriptor.anchor);
-			}
-
-			if (props.bind_fn === 'css' && props.hasOwnProperty('bind_property')) {
-				$target[props.bind_fn](props.bind_property, extract);
-			} else {
-				$target[props.bind_fn](extract);
-			}
+	for (let i = 0; i < finalDestination.length; i++) {
+		this.bindElement(finalDestination[i], props.bind_extracted, extracted, props, shortcode_obj, num)
 	}
 }
 
@@ -430,12 +368,12 @@ Shortcodes.prototype.construct = function(shortcode_obj) {
 				var props = shortcode_obj.descriptor.elements[k]
 				if (sorted.elements[k][i]) { //if the element exists, may be an uneven number
 					const item = sorted.elements[k][i]
-					this.executeProperties($(item), $(item_template), props, shortcode_obj.descriptor, i)
+					this.constructElements(item, item_template, props, shortcode_obj, i)
 				}
 			}
 
 			const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template.querySelectorAll(shortcode_obj.descriptor.item_anchor) : document.querySelectorAll(descriptor.anchor)
-			this.bindFunction(item_template, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj, i)
+			this.bindShortcode(item_template, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj, i)
 		}
 	} else {
 		if (shortcode_obj.descriptor.hasOwnProperty('elements')) {
@@ -446,18 +384,18 @@ Shortcodes.prototype.construct = function(shortcode_obj) {
 					for (let i = 0; i < sorted.elements[k].length; i++) {
 						const item = sorted.elements[k][i]
 						const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template : document.querySelectorAll(shortcode_obj.descriptor.anchor)
-						this.executeProperties($(item), $(dest), props, shortcode_obj.descriptor, i);
+						this.constructElements(item, dest, props, shortcode_obj, i);
 					}
 				}
 			}
 		} else {
 			const dest = shortcode_obj.descriptor.hasOwnProperty('template') ? template : document.querySelectorAll(shortcode_obj.descriptor.anchor)
-			this.bindFunction(sorted.elements.rest, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj)
+			this.bindShortcode(sorted.elements.rest, dest, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj)
 		}
 	}
 
 	if (shortcode_obj.descriptor.hasOwnProperty('template')) {
-		this.bindFunction(template, shortcode_obj.descriptor.anchor, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj)
+		this.bindShortcode(template, shortcode_obj.descriptor.anchor, shortcode_obj.descriptor.bind_fn, shortcode_obj.descriptor.bind_property, shortcode_obj)
 		return template
 	}
 
@@ -524,12 +462,83 @@ Shortcodes.prototype.clear = function() {
 	remove('.self-anchor')
 }
 
-Shortcodes.prototype.reinitialize = function($elem, callback) {
+Shortcodes.prototype.reinitialize = function(elem, callback) {
 	this.clear()
-	this.execute($elem, callback)
+	this.execute(elem, callback)
 }
 
-Shortcodes.prototype.bindFunction = function(source, destination, function_name, property_name, payload, additional_payload) {
+Shortcodes.prototype.bindElement = function(destination, properties, extracted, payload, additional_payload, num) {
+	if (isString(destination)) destination = querySingle(destination)
+	if (isString(properties)) properties = [properties]
+
+	const fns = {}
+
+	fns['append'] = function(destination, property, extracted) {
+		if (!extracted.hasOwnProperty('self')) return
+		if (extracted.self instanceof HTMLElement) extracted.self = [extracted.self]
+		for (let i = 0; i < extracted.self.length; i++) {
+			destination.appendChild(extracted.self[i])
+		}
+	}
+
+	fns['prepend'] = function(destination, property, extracted) {
+		if (!extracted.hasOwnProperty('self')) return
+		if (extracted.self instanceof HTMLElement) extracted.self = [extracted.self]
+		for (let i = 0; i < extracted.self.length; i++) {
+			if (destination.firstChild) {
+				destination.insertBefore(extracted.self[i], destination.firstChild)
+			} else {
+				destination.appendChild(extracted.self[i])
+			}
+		}
+	}
+
+	fns['html'] = function(destination, property, extracted) {
+		if (!extracted.hasOwnProperty('html')) return
+		destination.innerHTML = extracted.html
+	}
+
+	fns['text'] = function(destination, property, extracted) {
+		if (!extracted.hasOwnProperty('text')) return
+		destination.textContent = extracted.text
+	}
+
+	fns['style'] = function(destination, property, extracted) {
+		if (!isArray(property)) property = [property]
+
+		for (let i = 0; i < property.length; i++) {
+			if (!isObject(property[i]) || !hasOwnProperties(property[i], 'style_property', 'extracted_property')) continue
+			const camelCaseProp = transformDashToCamelCase(property[i].style_property)
+			if (!extracted.hasOwnProperty(property[i].extracted_property)) continue
+			let extract = extracted[property[i].extracted_property]
+			if (camelCaseProp === 'backgroundImage') {
+				extract = `url(${extract})`
+			}
+			destination.style[camelCaseProp] = extract
+		}
+	}
+
+	for (let i = 0; i < properties.length; i++) {
+		if (fns.hasOwnProperty(properties[i])) {
+			fns[properties[i]](destination, properties[i], extracted)
+			continue
+		}
+
+		if (isFunction(properties[i])) {
+			properties[i](destination, extracted, payload, additional_payload, num)
+			continue
+		}
+
+		if (isObject(properties[i])) {
+			fns['style'](destination, properties[i], extracted)
+			continue
+		}
+
+		destination.setAttribute(properties[i], extracted[properties[i]])
+	}
+}
+
+Shortcodes.prototype.bindShortcode = function(source, destination, function_name, property_name, payload, additional_payload) {
 	if (typeof destination === 'string') destination = query(destination)
 	else if (destination instanceof HTMLElement) destination = [destination]
 
@@ -543,7 +552,7 @@ Shortcodes.prototype.bindFunction = function(source, destination, function_name,
 
 	const fns = {}
 
-	fns['css'] = function(source, destination, property_name, payload, additional_payload) {
+	fns['style'] = function(source, destination, property_name, payload, additional_payload) {
 		if (typeof property_name === 'string') property_name = [property_name]
 
 		for (let i = 0; i < property_name.length; i++) {
@@ -588,33 +597,55 @@ Shortcodes.prototype.extract = function(element, properties) {
 
 	if (typeof properties === 'string') properties = [properties]
 
+	const fns = {}
 	const result = {}
-	const resultArr = []
+
+	fns['html'] = function(element, property) {
+		result.html = element.innerHTML
+	}
+
+	fns['text'] = function(element, property) {
+		result.text = element.textContent
+	}
+
+	fns['self'] = function(element, property) {
+		result.self = element
+	}
+
+	fns['style'] = function(element, property) {
+		if (!hasOwnProperties(properties[i], ['name', 'properties'])) return
+		if (!property.name === 'style') return
+		if (!isArray(property.properties)) property.properties = [property.properties]
+
+		result.style = {}
+
+		for (let i = 0; i < property.properties.length; i++) {
+			const camelCaseProp = transformDashToCamelCase(property.properties[i])
+			result.style[property.properties[i]] = element.style[camelCaseProp]
+		}
+	}
+
+	fns['function'] = function(element, property) {
+		if (!hasOwnProperties(property, ['name', 'extract_fn'])) return
+		if (!isFunction(property.extract_fn)) return
+		result[property.name] = property.extract_fn(element)
+	}
 
 	for (let i = 0; i < properties.length; i++) {
-		if (properties[i] === 'html') {
-			result.html = element.innerHTML
-			resultArr.push(element.innerHTML)
+
+		if (fns.hasOwnProperty(properties[i])) {
+			fns[properties[i]](element, properties[i])
 			continue
 		}
 
-		if (properties[i] === 'text') {
-			result.text = element.textContent
-			resultArr.push(element.textContent)
-			continue
-		}
-
-		if (properties[i] === 'text') {
-			result.self = element
-			resultArr.push(element)
+		if (isObject(properties[i])) {
+			fns['function'](element, properties[i])
+			fns['style'](element, properties[i])
 			continue
 		}
 
 		result[properties[i]] = element.getAttribute(properties[i])
-		resultArr.push(element.getAttribute(properties[i]))
 	}
-
-	if (resultArr.length === 1) return resultArr[0]
 
 	return result
 }
@@ -648,7 +679,7 @@ class Shortcode {
 		const fns = {}
 
 		fns['header-class'] = function(shortcode_obj, value) {
-			let header = null;
+			let header = null
 
 			if (shortcode_obj.descriptor.hasOwnProperty('header_selector') && shortcode_obj.descriptor.header_selector) {
 				header = document.querySelector(shortcode_obj.descriptor.header_selector);

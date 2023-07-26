@@ -48,50 +48,59 @@
                 <h3>JavaScript Descriptor</h3>
                 <pre class="line-numbers">
 <code class="language-javascript">shortcodes.register('hero', {
-anchor: '.shortcode-landing',
-bind_fn: 'append',
-template: 'section.hero',
-elements: {
-img: {
-  count: 1,
-  bind_fn: 'css',
-  bind_property: 'background-image',
-  extract_fn: 'attr',
-  extract_attr: 'src',
-  anchor: '.image-landing',
-  anchor_element: 'template'
-},
-a: {
-  count: 1,
-  anchor: '.link-landing',
-  extract_fn: 'attr',
-  extract_attr: ['href', 'title', 'html'],
-  bind_fn: function(extract, $dest, props) {
-    $dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button hollow">'+extract[2]+'</a>');
-  },
-  anchor_element: 'template'
-},
-h1: {
-  count: 1,
-  bind_fn: 'html',
-  anchor: '.title-landing',
-  extract_fn: 'html',
-  anchor_element: 'template'
-},
-'h2,h3,h4,h5,h6': {
-  count: 1,
-  bind_fn: 'html',
-  anchor: '.subtitle-landing',
-  extract_fn: 'html',
-  anchor_element: 'template'
-},
-rest: {
-  anchor: '.text-landing',
+  anchor: '.shortcode-landing',
   bind_fn: 'append',
-  extract_fn: 'self',
-  anchor_element: 'template'
-}
-}
+  template: 'section.hero',
+  callback: function(template) {
+    $(template).find('.down').on('click', function(e) {
+      e.preventDefault();
+
+      $('.container').animate({
+            scrollTop: $("#main").offset().top
+        }, 500);
+    });
+  },
+  elements: {
+    img: {
+      count: 1,
+      bind_extracted: {
+        style_property: 'background-image',
+        extracted_property: 'src'
+      },
+      extract: 'src',
+      anchor: '.image-landing',
+      anchor_element: 'template'
+    },
+    a: {
+      count: 1,
+      anchor: '.link-landing',
+      extract: ['href', 'title', 'text'],
+      bind_extracted: function(dest, extract, props) {
+        $(dest).append(`<a href="${extract.href}" title="${extract.title ? extract.title : ''}" class="button hollow">${extract.text}</a>`);
+      },
+      anchor_element: 'template'
+    },
+    h1: {
+      count: 1,
+      bind_extracted: 'html',
+      anchor: '.title-landing',
+      extract: 'html',
+      anchor_element: 'template'
+    },
+    'h2,h3,h4,h5,h6': {
+      count: 1,
+      bind_extracted: 'html',
+      anchor: '.subtitle-landing',
+      extract: 'html',
+      anchor_element: 'template'
+    },
+    rest: {
+      anchor: '.text-landing',
+      bind_extracted: 'append',
+      extract: 'self',
+      anchor_element: 'template'
+    }
+  }
 });</code>
                 </pre>
               </div>
@@ -121,41 +130,41 @@ rest: {
       elements: {
         img: {
           count: 1,
-          bind_fn: 'css',
-          bind_property: 'background-image',
-          extract_fn: 'attr',
-          extract_attr: 'src',
+          bind_extracted: {
+            style_property: 'background-image',
+            extracted_property: 'src'
+          },
+          extract: 'src',
           anchor: '.image-landing',
           anchor_element: 'template'
         },
         a: {
           count: 1,
           anchor: '.link-landing',
-          extract_fn: 'attr',
-          extract_attr: ['href', 'title', 'html'],
-          bind_fn: function(extract, $dest, props) {
-            $dest.find(props.anchor).append('<a href="'+extract[0]+'" title="'+extract[1]+'" class="button hollow">'+extract[2]+'</a>');
+          extract: ['href', 'title', 'text'],
+          bind_extracted: function(dest, extract, props) {
+            $(dest).append(`<a href="${extract.href}" title="${extract.title ? extract.title : ''}" class="button hollow">${extract.text}</a>`);
           },
           anchor_element: 'template'
         },
         h1: {
           count: 1,
-          bind_fn: 'html',
+          bind_extracted: 'html',
           anchor: '.title-landing',
-          extract_fn: 'html',
+          extract: 'html',
           anchor_element: 'template'
         },
         'h2,h3,h4,h5,h6': {
           count: 1,
-          bind_fn: 'html',
+          bind_extracted: 'html',
           anchor: '.subtitle-landing',
-          extract_fn: 'html',
+          extract: 'html',
           anchor_element: 'template'
         },
         rest: {
           anchor: '.text-landing',
-          bind_fn: 'append',
-          extract_fn: 'self',
+          bind_extracted: 'append',
+          extract: 'self',
           anchor_element: 'template'
         }
       }
@@ -212,60 +221,70 @@ rest: {
             <h3>JavaScript Descriptor</h3>
             <pre class="line-numbers">
 <code class="language-javascript">shortcodes.register('carousel', {
-anchor: '.shortcode-landing',
-bind_fn: 'append',
-template: 'section.carousel',
-item_template: '.carousel-item',
-item_anchor: '.slides-landing',
-callback: function(template) {
-$(template).find('.slides').slick({
-  slidesToShow: 3,
-  slidesToScroll: 1,
-  dots: true,
-  arrows: false,
-  swipeToSlide: true
-});
-},
-elements: {
-img: {
-  count: 'many',
-  bind_fn: 'css',
-  bind_property: 'background-image',
-  extract_fn: 'attr',
-  extract_attr: 'src',
-  anchor: '.image-landing',
-  anchor_element: 'item'
-},
-a: {
-  count: 'many',
-  anchor: '.link-landing',
-  extract_fn: 'attr',
-  extract_attr: ['href', 'title', 'html'],
-  bind_fn: function(extract, $dest, props, descriptor, num) {
-    if (num === 1) {
-      $dest.find(props.anchor).append('<a href="#view-code" target="_action" class="button small green">'+extract[2]+'</a>');
-    } else if (num === 2) {
-      $dest.find(props.anchor).append('<a href="#toggle-editor" target="_action" class="button small green">'+extract[2]+'</a>');
-    } else {
-      $dest.find(props.anchor).append('<a href="'+extract[0]+'" target="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
-    }
-  },
-  anchor_element: 'item'
-},
-h1: {
-  count: 'many',
-  bind_fn: 'html',
-  anchor: '.title-landing',
-  extract_fn: 'html',
-  anchor_element: 'item'
-},
-rest: {
-  anchor: '.text-landing',
+  anchor: '.shortcode-landing',
   bind_fn: 'append',
-  extract_fn: 'self',
-  anchor_element: 'item'
-}
-}
+  template: 'section.carousel',
+  item_template: '.carousel-item',
+  item_anchor: '.slides-landing',
+  callback: function(template) {
+    $('section.carousel').first().attr('id', 'main');
+    $(template).find('.slides').not('.slick-initialized').slick({
+      slidesToShow: 3,
+        slidesToScroll: 1,
+      dots: true,
+      arrows: false,
+      swipeToSlide: true,
+      responsive: [
+          {
+            breakpoint: 960,
+            settings: {
+              slidesToShow: 1,
+              slidesToScroll: 1
+            }
+          }
+      ]
+    });
+  },
+  elements: {
+    img: {
+      count: 'many',
+      bind_extracted: {
+        style_property: 'background-image',
+        extracted_property: 'src'
+      },
+      extract: 'src',
+      anchor: '.image-landing',
+      anchor_element: 'item'
+    },
+    a: {
+      count: 'many',
+      anchor: '.link-landing',
+      extract: ['href', 'target', 'html'],
+      bind_extracted: function(dest, extract, props, descriptor, num) {
+        if (num === 1) {
+          $(dest).append(`<a href="#view-code" target="_action" class="button small green">${extract.html}</a>`);
+        } else if (num === 2) {
+          $(dest).append(`<a href="#toggle-editor" target="_action" class="button small green">${extract.html}</a>`);
+        } else {
+          $(dest).append(`<a href="${extract.href}" target="${extract.target}" class="button small green">${extract.html}</a>`);
+        }
+      },
+      anchor_element: 'item'
+    },
+    h1: {
+      count: 'many',
+      bind_extracted: 'html',
+      anchor: '.title-landing',
+      extract: 'html',
+      anchor_element: 'item'
+    },
+    rest: {
+      anchor: '.text-landing',
+      bind_extracted: 'append',
+      extract: 'self',
+      anchor_element: 'item'
+    }
+  }
 });</code>
         </pre>
       </div>
@@ -315,40 +334,40 @@ rest: {
       elements: {
         img: {
           count: 'many',
-          bind_fn: 'css',
-          bind_property: 'background-image',
-          extract_fn: 'attr',
-          extract_attr: 'src',
+          bind_extracted: {
+            style_property: 'background-image',
+            extracted_property: 'src'
+          },
+          extract: 'src',
           anchor: '.image-landing',
           anchor_element: 'item'
         },
         a: {
           count: 'many',
           anchor: '.link-landing',
-          extract_fn: 'attr',
-          extract_attr: ['href', 'target', 'html'],
-          bind_fn: function(extract, $dest, props, descriptor, num) {
+          extract: ['href', 'target', 'html'],
+          bind_extracted: function(dest, extract, props, descriptor, num) {
             if (num === 1) {
-              $dest.find(props.anchor).append('<a href="#view-code" target="_action" class="button small green">'+extract[2]+'</a>');
+              $(dest).append(`<a href="#view-code" target="_action" class="button small green">${extract.html}</a>`);
             } else if (num === 2) {
-              $dest.find(props.anchor).append('<a href="#toggle-editor" target="_action" class="button small green">'+extract[2]+'</a>');
+              $(dest).append(`<a href="#toggle-editor" target="_action" class="button small green">${extract.html}</a>`);
             } else {
-              $dest.find(props.anchor).append('<a href="'+extract[0]+'" target="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+              $(dest).append(`<a href="${extract.href}" target="${extract.target}" class="button small green">${extract.html}</a>`);
             }
           },
           anchor_element: 'item'
         },
         h1: {
           count: 'many',
-          bind_fn: 'html',
+          bind_extracted: 'html',
           anchor: '.title-landing',
-          extract_fn: 'html',
+          extract: 'html',
           anchor_element: 'item'
         },
         rest: {
           anchor: '.text-landing',
-          bind_fn: 'append',
-          extract_fn: 'self',
+          bind_extracted: 'append',
+          extract: 'self',
           anchor_element: 'item'
         }
       }
@@ -383,17 +402,22 @@ rest: {
             <h3>JavaScript Descriptor</h3>
             <pre class="line-numbers">
 <code class="language-javascript">shortcodes.register('text', {
-anchor: '.shortcode-landing',
-bind_fn: 'append',
-template: 'section.text',
-elements: {
-rest: {
-  anchor: '.text-landing',
+  anchor: '.shortcode-landing',
   bind_fn: 'append',
-  extract_fn: 'self',
-  anchor_element: 'template'
-}
-}
+  template: 'section.text',
+  callback: function(template) {
+    $(template).find('.text-landing pre').each(function() {
+      $(this).html( '<code class="language-html">' + $(this).html() + '</code>');
+    });
+  },
+  elements: {
+    rest: {
+      anchor: '.text-landing',
+      bind_extracted: 'append',
+      extract: 'self',
+      anchor_element: 'template'
+    }
+  }
 });</code>
           </div>
         </div>
@@ -414,8 +438,8 @@ rest: {
       elements: {
         rest: {
           anchor: '.text-landing',
-          bind_fn: 'append',
-          extract_fn: 'self',
+          bind_extracted: 'append',
+          extract: 'self',
           anchor_element: 'template'
         }
       }
@@ -486,14 +510,14 @@ rest: {
           count: 'many',
           anchor: '.link-landing',
           extract_fn: 'attr',
-          extract_attr: ['href', 'target', 'html'],
-          bind_fn: function(extract, $dest, props, descriptor, num) {
+          extract: ['href', 'target', 'html'],
+          bind_fn: function(extract, dest, props, descriptor, num) {
             if (num === 1) {
-              $dest.find(props.anchor).append('<a href="#view-code" target="_action" class="button small green">'+extract[2]+'</a>');
+              $(dest).find(props.anchor).append(`<a href="#view-code" target="_action" class="button small green">${extract.html}</a>`);
             } else if (num === 2) {
-              $dest.find(props.anchor).append('<a href="#toggle-editor" target="_action" class="button small green">'+extract[2]+'</a>');
+              $(dest).find(props.anchor).append(`<a href="#toggle-editor" target="_action" class="button small green">${extract.html}</a>`);
             } else {
-              $dest.find(props.anchor).append('<a href="'+extract[0]+'" target="'+extract[1]+'" class="button small green">'+extract[2]+'</a>');
+              $(dest).find(props.anchor).append(`<a href="${extract.href}" target="${extract.target}" class="button small green">${extract.html}</a>`);
             }
           },
           anchor_element: 'item'
