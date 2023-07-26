@@ -750,7 +750,7 @@ var Shortcode = class {
       shortcode_obj.css["color"] = attr;
     };
     if (this.descriptor.hasOwnProperty("attribute_parsers")) {
-      for (var k in this.descriptor.attribute_parsers) {
+      for (const k in this.descriptor.attribute_parsers) {
         if (propertyIsFunction(this.descriptor.attribute_parsers, k)) {
           fns[k] = this.descriptor.attribute_parsers[k];
         }

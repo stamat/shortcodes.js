@@ -1,11 +1,9 @@
-# shortcodes.js v1.0.3
+# shortcodes.js v1.0.1
 Shortcodes.js is a completely front-end solution that uses sequences of DOM elements for templating dynamic and beautiful layouts while preserving SEO where backend development is limited, e.g. Shopify.
 
+Being completely frontend solution means there will be some CLS, or the page will flicker on initial load, but it's a small price to pay for the flexibility and ease of use.
+
 [DEMO HERE ⤻](http://stamat.github.io/shortcodes.js/)
-
-## Dependencies
-
-**jQuery 1.11.3+**
 
 ## How it works?
 Shortcodes.js works by interpreting sequences of different text formatting, set in WYSIWYG editor, under the **shortcode tag**, predefined for each tag via provided **binding descriptor** and it's respective **HTML template**.
@@ -33,31 +31,30 @@ var example_descriptor = {
     anchor: '.carousel-landing', // or "self" if you use a closing tag for shortcode this will inject the shortcode at the place it was found
     item_template: '.slide.section-carousel',
     item_anchor: '.slides-landing',
-	pre: function(descriptor, attrs, val) {/*...*/}, //callback before templating
-	attribute_parsers: {custom: function(pts, descriptor, attr){} /*...*/}, //additional attribute parsing methods, see Shortcodes.prototype.parseAttributes. This example will trigger a function for any attribute starting with "custom-"
-	callback: function($template, parsed_attrs, descriptor) {/*...*/}, //callback after templating is complete, with arguments sufficient for doing some manual additional programming
+	pre: function(shortcode_obj) {/*...*/}, //callback before templating
+	attribute_parsers: {custom: function(shortcode_obj, value){} /*...*/}, //additional attribute parsing methods, see Shortcodes.prototype.parseAttributes. This example will trigger a function for any attribute starting with "custom-"
+	callback: function(template, shortcode_obj) {/*...*/}, //callback after templating is complete, with arguments sufficient for doing some manual additional programming
     bind_fn: 'append', // jquery function html, text, append, before, prepend or custom function with arguments (extract, $dest, props, descriptor)
     elements: {
         'img': {
             count: 'many',
-            bind_fn: function(extract, $dest, props, descriptor) {
+            bind_extracted: function(destination, extracted, properties, shortcode_obj, num) {
                 // console.log('whoa');
             },
-            extract_fn: 'attr', //what about the alt images?
-            extract_attr: ['src', 'alt'], //if extract is attr you need to provide which attr, can be string or array
+            extract: ['src', 'alt'], //if extract is attr you need to provide which attr, can be string or array
             anchor: '.image-landing',
             anchor_element: 'item'
         },
         'h1, h2, h3, h4': {
             count: 'many', // count = 'many' or num
-            bind_fn: 'html', // jquery function html, text, append, before, prepend, or custom function
-            extract_fn: 'html', // jquery function html, text, self, attr or custom function
+            bind_extracted: 'html', // jquery function html, text, append, before, prepend, or custom function
+            extract: 'html', // jquery function html, text, self, attr or custom function
             anchor: '.title-landing', // where on element should it land
             anchor_element: 'item', // item or template or anchor (to the selected element)
         },
         'rest': { //rest items are used
-            extract_fn: 'self',
-            bind_fn: 'append',
+            extract: 'self',
+            bind_extracted: 'append',
             anchor: '.rest-landing',
             anchor_element: 'item'
         }

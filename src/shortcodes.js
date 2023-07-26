@@ -435,7 +435,7 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 			template.classList.add('shortcode-js')
 		}
 		
-		//TODO: per item callback
+		//TODO: per item callback? I forgot what I've meant by this
 		if (propertyIsFunction(shortcode_obj.descriptor, 'callback')) {
 			shortcode_obj.descriptor.callback(template, shortcode_obj)
 		}
@@ -717,7 +717,7 @@ class Shortcode {
 
 		//Descriptor can carry custom attribute parsers. They can override the default ones
 		if (this.descriptor.hasOwnProperty('attribute_parsers')) {
-			for (var k in this.descriptor.attribute_parsers) {
+			for (const k in this.descriptor.attribute_parsers) {
 				if (propertyIsFunction(this.descriptor.attribute_parsers, k)) {
 					fns[k] = this.descriptor.attribute_parsers[k]
 				}
