@@ -17,6 +17,8 @@ The **binding descriptor** is a set of instructions on what sequence to expect a
 
 *TODO: basic code setup and demo in action*
 
+💡 How about optional caching in local storage? We can cache the whole DOM, and then just trigger the callback.
+
 # *Work in progress!*
 
 ## Sample descriptor
