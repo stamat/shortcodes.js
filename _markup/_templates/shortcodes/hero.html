@@ -1,0 +1,146 @@
+ <!--
+  ____________________________________________________________________
+    [hero]
+  ____________________________________________________________________
+  -->
+  <section class="hero template image-landing">
+    <div class="table">
+      <div class="cell">
+        <h1 class="title monospace title-landing"></h1>
+        <h2 class="subtitle subtitle-landing"></h2>
+        <div class="text text-landing center p656">
+        </div>
+        <div class="button-wrap link-landing"></div>
+        <a href="#main" class="down"><span class="bounce">&darr;</span></a>
+        <div class="code-wrap">
+          <a href="#" class="code-button">
+            <img src="https://i.imgur.com/P197gya.png" /><span class="label"><span class="show">show</span><span class="hide">hide</span> code</span>
+          </a>
+          <div class="code">
+            <h2>[hero]</h2>
+            <div class="columns clearfix">
+              <div class="column">
+                <h3>HTML Template</h3>
+                <pre class="line-numbers">
+<code class="language-html">&#x3C;section class=&#x22;hero image-landing&#x22;&#x3E;
+&#x9;&#x3C;div class=&#x22;table&#x22;&#x3E;
+&#x9;&#x9;&#x3C;div class=&#x22;cell&#x22;&#x3E;
+&#x9;&#x9;&#x9;&#x3C;h1 class=&#x22;title monospace title-landing&#x22;&#x3E;&#x3C;/h1&#x3E;
+&#x9;&#x9;&#x9;&#x3C;h2 class=&#x22;subtitle subtitle-landing&#x22;&#x3E;&#x3C;/h2&#x3E;
+&#x9;&#x9;&#x9;&#x3C;div class=&#x22;text text-landing&#x22;&#x3E;
+&#x9;&#x9;&#x9;&#x3C;/div&#x3E;
+&#x9;&#x9;&#x9;&#x3C;div class=&#x22;button-wrap link-landing&#x22;&#x3E;&#x3C;/div&#x3E;
+&#x9;&#x9;&#x9;&#x3C;a href=&#x22;#main&#x22; class=&#x22;down&#x22;&#x3E;&#x3C;span class=&#x22;bounce&#x22;&#x3E;&#x26;darr;&#x3C;/span&#x3E;&#x3C;/a&#x3E;
+&#x9;&#x9;&#x3C;/div&#x3E;
+&#x9;&#x3C;/div&#x3E;
+&#x3C;/section&#x3E;</code>
+                </pre>
+              </div>
+              <div class="column">
+                <h3>JavaScript Descriptor</h3>
+                <pre class="line-numbers">
+<code class="language-javascript">shortcodes.register('hero', {
+  anchor: '.shortcode-landing',
+  bind_fn: 'append',
+  template: 'section.hero',
+  elements: {
+    img: {
+      count: 1,
+      bind_extracted: {
+        style_property: 'background-image',
+        extracted_property: 'src'
+      },
+      extract: 'src',
+      anchor: '.image-landing',
+      anchor_element: 'template'
+    },
+    a: {
+      count: 1,
+      anchor: '.link-landing',
+      extract: ['href', 'title', 'text'],
+      bind_extracted: function(dest, extract, props) {
+        dest.appendChild(parseDOM(`&lt;a href=&quot;${extract.href}&quot; title=&quot;${ extract.title ? extract.title : &#39;&#39; }&quot; class=&quot;button hollow flex-button&quot;&gt;&lt;svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 16 16&quot; width=&quot;16&quot; height=&quot;16&quot;&gt;&lt;path fill=&quot;currentColor&quot; d=&quot;M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z&quot;&gt;&lt;/path&gt;&lt;/svg&gt;${extract.text}&lt;/a&gt;`));
+      },
+      anchor_element: 'template'
+    },
+    h1: {
+      count: 1,
+      bind_extracted: 'html',
+      anchor: '.title-landing',
+      extract: 'html',
+      anchor_element: 'template'
+    },
+    'h2,h3,h4,h5,h6': {
+      count: 1,
+      bind_extracted: 'html',
+      anchor: '.subtitle-landing',
+      extract: 'html',
+      anchor_element: 'template'
+    },
+    rest: {
+      anchor: '.text-landing',
+      bind_extracted: 'append',
+      extract: 'self',
+      anchor_element: 'template'
+    }
+  }
+});</code>
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="github-buttons">
+          <a style="background-color:black;color:white;text-decoration:none;padding:4px 6px;font-family:-apple-system, BlinkMacSystemFont, &quot;San Francisco&quot;, &quot;Helvetica Neue&quot;, Helvetica, Ubuntu, Roboto, Noto, &quot;Segoe UI&quot;, Arial, sans-serif;font-size:12px;font-weight:bold;line-height:1.2;display:inline-block;border-radius:3px" href="https://unsplash.com/@evstyle?utm_medium=referral&amp;utm_campaign=photographer-credit&amp;utm_content=creditBadge" target="_blank" rel="noopener noreferrer" title="Download free do whatever you want high-resolution photos from Ev"><span style="display:inline-block;padding:2px 3px"><svg xmlns="http://www.w3.org/2000/svg" style="height:12px;width:auto;position:relative;vertical-align:middle;top:-2px;fill:white" viewBox="0 0 32 32"><title>unsplash-logo</title><path d="M10 9V0h12v9H10zm12 5h10v18H0V14h10v9h12v-9z"></path></svg></span><span style="display:inline-block;padding:2px 3px">Ev</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script type="text/javascript">
+    shortcodes.register('hero', {
+      anchor: '.shortcode-landing',
+      bind_fn: 'append',
+      template: 'section.hero',
+      elements: {
+        img: {
+          count: 1,
+          bind_extracted: {
+            style_property: 'background-image',
+            extracted_property: 'src'
+          },
+          extract: 'src',
+          anchor: '.image-landing',
+          anchor_element: 'template'
+        },
+        a: {
+          count: 1,
+          anchor: '.link-landing',
+          extract: ['href', 'title', 'text'],
+          bind_extracted: function(dest, extract, props) {
+            dest.appendChild(parseDOM(`<a href="${extract.href}" title="${ extract.title ? extract.title : '' }" class="button hollow flex-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>${extract.text}</a>`));
+          },
+          anchor_element: 'template'
+        },
+        h1: {
+          count: 1,
+          bind_extracted: 'html',
+          anchor: '.title-landing',
+          extract: 'html',
+          anchor_element: 'template'
+        },
+        'h2,h3,h4,h5,h6': {
+          count: 1,
+          bind_extracted: 'html',
+          anchor: '.subtitle-landing',
+          extract: 'html',
+          anchor_element: 'template'
+        },
+        rest: {
+          anchor: '.text-landing',
+          bind_extracted: 'append',
+          extract: 'self',
+          anchor_element: 'template'
+        }
+      }
+    });
+  </script>

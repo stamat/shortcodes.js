@@ -1,0 +1,92 @@
+ <!--
+  ____________________________________________________________________
+    [footer] NOT COMPLETE
+  ____________________________________________________________________
+  -->
+  <footer class="footer template">
+    <div class="center">
+    </div>
+    <div class="code-wrap">
+      <a href="#" class="code-button black">
+        <img src="https://i.imgur.com/P197gya.png" /><span class="label"><span class="show">show</span><span class="hide">hide</span> code</span>
+      </a>
+      <div class="code">
+        <h2>[text]</h2>
+        <div class="columns clearfix">
+          <div class="column">
+            <h3>HTML Template</h3>
+            <pre class="line-numbers">
+              <code class="language-html">
+
+              </code>
+            </pre>
+          </div>
+          <div class="column">
+            <h3>JavaScript Descriptor</h3>
+            <pre class="line-numbers">
+<code class="language-javascript">shortcodes.register('text', {
+anchor: '.shortcode-landing',
+bind_fn: 'append',
+template: 'section.text',
+elements: {
+rest: {
+  anchor: '.text-landing',
+  bind_fn: 'append',
+  extract_fn: 'self',
+  anchor_element: 'template'
+}
+}
+});</code>
+          </div>
+        </div>
+        </pre>
+      </div>
+    </div>
+  </footer>
+  <script type="text/javascript">
+    shortcodes.register('footer', {
+      anchor: '.shortcode-landing',
+      bind_fn: 'append',
+      template: 'footer',
+      elements: {
+        img: {
+          count: 'many',
+          bind_fn: 'css',
+          bind_property: 'background-image',
+          extract_fn: 'attr',
+          extract_attr: 'src',
+          anchor: '.image-landing',
+          anchor_element: 'item'
+        },
+        a: {
+          count: 'many',
+          anchor: '.link-landing',
+          extract_fn: 'attr',
+          extract: ['href', 'target', 'html'],
+          bind_fn: function(extract, dest, props, descriptor, num) {
+            if (num === 1) {
+              $(dest).find(props.anchor).append(`<a href="#view-code" target="_action" class="button small green">${extract.html}</a>`);
+            } else if (num === 2) {
+              $(dest).find(props.anchor).append(`<a href="#toggle-editor" target="_action" class="button small green">${extract.html}</a>`);
+            } else {
+              $(dest).find(props.anchor).append(`<a href="${extract.href}" target="${extract.target}" class="button small green">${extract.html}</a>`);
+            }
+          },
+          anchor_element: 'item'
+        },
+        h1: {
+          count: 'many',
+          bind_fn: 'html',
+          anchor: '.title-landing',
+          extract_fn: 'html',
+          anchor_element: 'item'
+        },
+        rest: {
+          anchor: '.text-landing',
+          bind_fn: 'append',
+          extract_fn: 'self',
+          anchor_element: 'item'
+        }
+      }
+    });
+  </script>

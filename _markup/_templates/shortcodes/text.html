@@ -1,0 +1,73 @@
+<!--
+  ____________________________________________________________________
+    [text]
+  ____________________________________________________________________
+  -->
+  <section class="text template">
+    <div class="text-landing center p656">
+    </div>
+    <div class="code-wrap">
+      <a href="#" class="code-button black">
+        <img src="https://i.imgur.com/P197gya.png" /><span class="label"><span class="show">show</span><span class="hide">hide</span> code</span>
+      </a>
+      <div class="code">
+        <h2>[text]</h2>
+        <div class="columns clearfix">
+          <div class="column">
+            <h3>HTML Template</h3>
+            <pre class="line-numbers">
+<code class="language-html">&#x3C;section class=&#x22;text template&#x22;&#x3E;
+&#x9;&#x3C;div class=&#x22;text-landing center p656&#x22;&#x3E;
+&#x9;&#x3C;/div&#x3E;
+&#x3C;/section&#x3E;</code>
+            </pre>
+          </div>
+          <div class="column">
+            <h3>JavaScript Descriptor</h3>
+            <pre class="line-numbers">
+<code class="language-javascript">shortcodes.register('text', {
+  anchor: '.shortcode-landing',
+  bind_fn: 'append',
+  template: 'section.text',
+  callback: function(template) {
+    const pres = template.querySelectorAll('.text-landing pre')
+    for (let i = 0; i < pres.length; i++) {
+      pres[i].innerHTML = &#39;&lt;code class=&quot;language-html&quot;&gt;&#39; + pres[i].innerHTML + &#39;&lt;/code&gt;&#39;
+    }
+  },
+  elements: {
+    rest: {
+      anchor: '.text-landing',
+      bind_extracted: 'append',
+      extract: 'self',
+      anchor_element: 'template'
+    }
+  }
+});</code>
+          </div>
+        </div>
+        </pre>
+      </div>
+    </div>
+  </section>
+  <script type="text/javascript">
+    shortcodes.register('text', {
+      anchor: '.shortcode-landing',
+      bind_fn: 'append',
+      template: 'section.text',
+      callback: function(template) {
+        const pres = template.querySelectorAll('.text-landing pre')
+        for (let i = 0; i < pres.length; i++) {
+          pres[i].innerHTML = '<code class="language-html">' + pres[i].innerHTML + '</code>'
+        }
+      },
+      elements: {
+        rest: {
+          anchor: '.text-landing',
+          bind_extracted: 'append',
+          extract: 'self',
+          anchor_element: 'template'
+        }
+      }
+    });
+  </script>
