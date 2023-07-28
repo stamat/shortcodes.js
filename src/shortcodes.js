@@ -314,7 +314,6 @@ Shortcodes.prototype.constructElements = function(item, dest, props, shortcode_o
 
 	if (!extracted) return
 
-	console.log(item)
 	// TODO: this should be optional, if the option for shopify is set do this.
 	if (matchesAll(item, 'img') && extracted.hasOwnProperty('src')) {
 		if (this.shopify_img_re.test(extracted.src)) {

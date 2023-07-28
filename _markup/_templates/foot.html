@@ -1,98 +1,16 @@
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-<!-- initialize Quill WYSIWYG editor -->
+<!-- Quill WYSIWYG editor -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-<script type="text/javascript">
-  var toolbarOptions = [
-    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-    ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
-    ['blockquote', 'link', 'image'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-    [{'align': []}],
-    ['code-block'],
-    ['clean']                                         // remove formatting button
-  ];
-  var options = {
-    bounds: '#editor .editor',
-    modules: {
-      toolbar: toolbarOptions
-    },
-    theme: 'snow'
-  };
-  var editor = new Quill('#editor .editor', options);
-
-  editor.on('text-change', function(delta, oldDelta, source) {
-    $('.code-button.active').parent().find('.code').stop(true).fadeOut();
-    $('.code-button.active').removeClass('active');
-
-    shortcodes.reinitialize(document.querySelector('#editor .ql-editor').cloneNode(true), function(){
-      // https://www.youtube.com/watch?v=qetW6R9Jxs4
-    });
-  });
-
-  function parseDOM(html) {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
-    return doc.body.firstChild
-  }
-</script>
-
+<script type="text/javascript" src="demo.min.js"></script>
 <!-- initialize other demo-only actions -->
+
 <script type="text/javascript">
-  function codeButton(elem) {
-    $('.code-button.active').not(elem).parent().find('.code').stop(true).fadeOut();
-    $('.code-button.active').not(elem).removeClass('active');
-
-    var $code = $(elem).parent().find('.code');
-    var $root = $(elem).closest('.shortcode-js');
-
-    if ($(elem).hasClass('active')) {
-      $(elem).removeClass('active');
-      $code.stop(true).fadeOut();
-    } else {
-      $(elem).addClass('active');
-      $code.css('max-height', $root.height() - 118);
-      $code.css('height', 'calc(100vh - 118px)');
-      $code.stop(true).fadeIn();
-    }
-  }
-
-  $('body').on('click', '.code-button', function(e) {
-    e.preventDefault();
-    codeButton(this);
-  });
-
-  $('.sidebar .carret a, .toggle-editor').on('click', function(e) {
-    e.preventDefault();
-    $('body').toggleClass('editor-active');
-
-    setTimeout(function(){
-      $(window).trigger('resize');
-    }, 250);
-  });
-
-  if (window.innerWidth < 960) {
-    $('body').removeClass('editor-active');
-  }
-
-  $('body').on('click', 'a[target="_action"]', function(e) {
-    e.preventDefault();
-
-    if ($(this).attr('href') === '#view-code') {
-      codeButton($(this).closest('.shortcode-js').find('.code-button'));
-    } else if ($(this).attr('href') === '#toggle-editor') {
-      $('.sidebar .carret a').trigger('click');
-    }
-  });
-
 /**
 * ========================================================================
    EXECUTE SHORTCODES
 * ========================================================================
 */
 
-  shortcodes.execute($('#editor .ql-editor').clone()[0], function() {
+  shortcodes.execute(document.querySelector('#editor .ql-editor').cloneNode(true), function() {
     // https://www.youtube.com/watch?v=qetW6R9Jxs4
     // console.log(arguments);
   });

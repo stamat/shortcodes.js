@@ -476,7 +476,6 @@
     const extracted = props.extract ? this.extract(item, props.extract) : null;
     if (!extracted)
       return;
-    console.log(item);
     if (matchesAll(item, "img") && extracted.hasOwnProperty("src")) {
       if (this.shopify_img_re.test(extracted.src)) {
         extracted.src = extracted.src.replace(this.shopify_img_re, "$1$3");

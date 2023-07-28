@@ -10,6 +10,18 @@
       "target": "es2019",
       "mangle": true
     }
+  },
+  {
+    "in": "demo.mjs",
+    "out": "demo.js",
+    "options": {
+      "sourcemap": true,
+      "minify": true,
+      "justMinified": false,
+      "format": "iife",
+      "target": "es2019",
+      "mangle": true
+    }
   }],
   "styles": [{
     "in": "_sass/index.scss",
@@ -40,6 +52,7 @@
   "watch": [
     "_markup",
     "_sass",
-    "src"
+    "src",
+    "demo.mjs"
   ]
 }

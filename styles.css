@@ -1,4 +1,6 @@
 /* shortcodes.js v1.0.2 | https://github.com/stamat/shortcodes.js | MIT License */
+@import 'node_modules/@glidejs/glide/dist/css/glide.core.min.css';
+@import 'node_modules/@glidejs/glide/dist/css/glide.theme.min.css';
 html, body {
   font-family: "Lato", sans-serif;
   color: #1d1d1d;
@@ -250,6 +252,9 @@ p {
     padding-right: 8px;
     float: left;
   }
+  .glide__bullets {
+    display: none !important;
+  }
   body.editor-active .container main > .content {
     margin-left: 500px;
   }
@@ -500,10 +505,6 @@ section.carousel .carousel-item {
   padding-bottom: 10px;
 }
 
-.slick-dots li:only-child {
-  display: none;
-}
-
 section.text .text-landing > p > img {
   width: 100%;
 }
@@ -527,5 +528,39 @@ section.hero .link-landing {
   display: block;
   margin-top: -2px;
   margin-right: 8px;
+}
+
+@media screen and (min-width: 960px) {
+  .glide__bullets {
+    display: none;
+  }
+  .glide__bullet:hover {
+    border: 0;
+    background: rgba(0, 0, 0, 0.4);
+  }
+}
+.glide__bullets {
+  position: static;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translateX(0);
+  margin-top: 16px;
+}
+
+.glide__bullet.glide__bullet--active {
+  background: #9ABAAF !important;
+}
+
+.glide__bullet {
+  border: 0;
+  background: rgba(0, 0, 0, 0.2);
+  margin-left: 8px;
+  margin-right: 8px;
+}
+.glide__bullet:hover {
+  border: 0;
+  background: rgba(0, 0, 0, 0.2);
 }
 /*# sourceMappingURL=styles.css.map */

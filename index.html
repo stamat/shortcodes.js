@@ -10,8 +10,6 @@
 
     <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700|IBM+Plex+Mono:400,600&display=swap" rel="stylesheet">
 		<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
-		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
 
     <link rel="stylesheet" type="text/css" href="styles.css">
 
@@ -250,10 +248,16 @@
   ____________________________________________________________________
   -->
   <section class="carousel template">
-        <div class="center above">
-            <div class="slides slides-landing">
+        <div class="center above glide">
+          <div data-glide-el="track" class="glide__track">
+            <div class="slides glide__slides slides-landing">
 
             </div>
+          </div>
+
+          <div class="slider__bullets glide__bullets" data-glide-el="controls[nav]">
+              
+          </div>
         </div>
     <div class="code-wrap">
       <a href="#" class="code-button black">
@@ -299,23 +303,45 @@
   item_template: '.carousel-item',
   item_anchor: '.slides-landing',
   callback: function(template) {
-    $('section.carousel').first().attr('id', 'main')
-    $(template).find('.slides').not('.slick-initialized').slick({
-      slidesToShow: 3,
-        slidesToScroll: 1,
-      dots: true,
-      arrows: false,
-      swipeToSlide: true,
-      responsive: [
-          {
-            breakpoint: 960,
-            settings: {
-              slidesToShow: 1,
-              slidesToScroll: 1
-            }
-          }
-      ]
-    });
+    document.querySelector('section.carousel').setAttribute('id', 'main')
+    var glide = new Glide(template, {
+      type: 'slider',
+      perView: 3,
+      bound: true,
+      breakpoints: {
+        960: {
+          perView: 1
+        }
+      }
+    })
+
+    var slides = template.querySelectorAll('.glide__slide')
+    var bullets = template.querySelector('.glide__bullets')
+
+    if (bullets)
+      for (var i = 0; i < slides.length; i++) {
+        bullets.appendChild(parseDOM(`<button class="slider__bullet glide__bullet" data-glide-dir="=${i}"></button>`))
+      }
+
+    glide.mount()
+
+    matchMedia('(max-width: 960px)', function(e) {
+      if (e.matches) {
+        glide.enable()
+      } else {
+        glide.mount()
+        glide.update({ startAt: 0 })
+        glide.disable()
+      }
+    })
+
+    if (matchMedia('(max-width: 960px)').matches) {
+      glide.enable()
+    } else {
+      glide.mount()
+      glide.update({ startAt: 0 })
+      glide.disable()
+    }
   },
   elements: {
     img: {
@@ -363,7 +389,7 @@
     </div>
   </section>
 
-  <div class="carousel-item template">
+  <div class="carousel-item glide__slide template">
     <div class="inner">
       <div class="image-wrap">
         <div class="image image-landing">
@@ -385,23 +411,45 @@
       item_template: '.carousel-item',
       item_anchor: '.slides-landing',
       callback: function(template) {
-        $('section.carousel').first().attr('id', 'main')
-        $(template).find('.slides').not('.slick-initialized').slick({
-          slidesToShow: 3,
-            slidesToScroll: 1,
-          dots: true,
-          arrows: false,
-          swipeToSlide: true,
-          responsive: [
-              {
-                breakpoint: 960,
-                settings: {
-                  slidesToShow: 1,
-                  slidesToScroll: 1
-                }
-              }
-          ]
-        });
+        document.querySelector('section.carousel').setAttribute('id', 'main')
+        var glide = new Glide(template, {
+          type: 'slider',
+          perView: 3,
+          bound: true,
+          breakpoints: {
+            960: {
+              perView: 1
+            }
+          }
+        })
+
+        var slides = template.querySelectorAll('.glide__slide')
+        var bullets = template.querySelector('.glide__bullets')
+
+        if (bullets)
+          for (var i = 0; i < slides.length; i++) {
+            bullets.appendChild(parseDOM(`<button class="slider__bullet glide__bullet" data-glide-dir="=${i}"></button>`))
+          }
+
+        glide.mount()
+
+        matchMedia('(max-width: 960px)', function(e) {
+          if (e.matches) {
+            glide.enable()
+          } else {
+            glide.mount()
+            glide.update({ startAt: 0 })
+            glide.disable()
+          }
+        })
+
+        if (matchMedia('(max-width: 960px)').matches) {
+          glide.enable()
+        } else {
+          glide.mount()
+          glide.update({ startAt: 0 })
+          glide.disable()
+        }
       },
       elements: {
         img: {
@@ -615,101 +663,19 @@ rest: {
 
 </div>
 
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-<!-- initialize Quill WYSIWYG editor -->
+<!-- Quill WYSIWYG editor -->
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-<script type="text/javascript">
-  var toolbarOptions = [
-    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-    ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
-    ['blockquote', 'link', 'image'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'script': 'sub'}, { 'script': 'super' }],      // superscript/subscript
-    [{'align': []}],
-    ['code-block'],
-    ['clean']                                         // remove formatting button
-  ];
-  var options = {
-    bounds: '#editor .editor',
-    modules: {
-      toolbar: toolbarOptions
-    },
-    theme: 'snow'
-  };
-  var editor = new Quill('#editor .editor', options);
-
-  editor.on('text-change', function(delta, oldDelta, source) {
-    $('.code-button.active').parent().find('.code').stop(true).fadeOut();
-    $('.code-button.active').removeClass('active');
-
-    shortcodes.reinitialize(document.querySelector('#editor .ql-editor').cloneNode(true), function(){
-      // https://www.youtube.com/watch?v=qetW6R9Jxs4
-    });
-  });
-
-  function parseDOM(html) {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
-    return doc.body.firstChild
-  }
-</script>
-
+<script type="text/javascript" src="demo.min.js"></script>
 <!-- initialize other demo-only actions -->
+
 <script type="text/javascript">
-  function codeButton(elem) {
-    $('.code-button.active').not(elem).parent().find('.code').stop(true).fadeOut();
-    $('.code-button.active').not(elem).removeClass('active');
-
-    var $code = $(elem).parent().find('.code');
-    var $root = $(elem).closest('.shortcode-js');
-
-    if ($(elem).hasClass('active')) {
-      $(elem).removeClass('active');
-      $code.stop(true).fadeOut();
-    } else {
-      $(elem).addClass('active');
-      $code.css('max-height', $root.height() - 118);
-      $code.css('height', 'calc(100vh - 118px)');
-      $code.stop(true).fadeIn();
-    }
-  }
-
-  $('body').on('click', '.code-button', function(e) {
-    e.preventDefault();
-    codeButton(this);
-  });
-
-  $('.sidebar .carret a, .toggle-editor').on('click', function(e) {
-    e.preventDefault();
-    $('body').toggleClass('editor-active');
-
-    setTimeout(function(){
-      $(window).trigger('resize');
-    }, 250);
-  });
-
-  if (window.innerWidth < 960) {
-    $('body').removeClass('editor-active');
-  }
-
-  $('body').on('click', 'a[target="_action"]', function(e) {
-    e.preventDefault();
-
-    if ($(this).attr('href') === '#view-code') {
-      codeButton($(this).closest('.shortcode-js').find('.code-button'));
-    } else if ($(this).attr('href') === '#toggle-editor') {
-      $('.sidebar .carret a').trigger('click');
-    }
-  });
-
 /**
 * ========================================================================
    EXECUTE SHORTCODES
 * ========================================================================
 */
 
-  shortcodes.execute($('#editor .ql-editor').clone()[0], function() {
+  shortcodes.execute(document.querySelector('#editor .ql-editor').cloneNode(true), function() {
     // https://www.youtube.com/watch?v=qetW6R9Jxs4
     // console.log(arguments);
   });

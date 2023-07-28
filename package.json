@@ -13,6 +13,7 @@
     "poops": "^1.0.7"
   },
   "dependencies": {
+    "@glidejs/glide": "^3.6.0",
     "book-of-spells": "^1.0.4"
   }
 }

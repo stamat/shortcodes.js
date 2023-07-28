@@ -160,10 +160,16 @@
   ____________________________________________________________________
   -->
   <section class="carousel template">
-        <div class="center above">
-            <div class="slides slides-landing">
+        <div class="center above glide">
+          <div data-glide-el="track" class="glide__track">
+            <div class="slides glide__slides slides-landing">
 
             </div>
+          </div>
+
+          <div class="slider__bullets glide__bullets" data-glide-el="controls[nav]">
+              
+          </div>
         </div>
     <div class="code-wrap">
       <a href="#" class="code-button black">
@@ -209,23 +215,45 @@
   item_template: '.carousel-item',
   item_anchor: '.slides-landing',
   callback: function(template) {
-    $('section.carousel').first().attr('id', 'main')
-    $(template).find('.slides').not('.slick-initialized').slick({
-      slidesToShow: 3,
-        slidesToScroll: 1,
-      dots: true,
-      arrows: false,
-      swipeToSlide: true,
-      responsive: [
-          {
-            breakpoint: 960,
-            settings: {
-              slidesToShow: 1,
-              slidesToScroll: 1
-            }
-          }
-      ]
-    });
+    document.querySelector('section.carousel').setAttribute('id', 'main')
+    var glide = new Glide(template, {
+      type: 'slider',
+      perView: 3,
+      bound: true,
+      breakpoints: {
+        960: {
+          perView: 1
+        }
+      }
+    })
+
+    var slides = template.querySelectorAll('.glide__slide')
+    var bullets = template.querySelector('.glide__bullets')
+
+    if (bullets)
+      for (var i = 0; i < slides.length; i++) {
+        bullets.appendChild(parseDOM(`<button class="slider__bullet glide__bullet" data-glide-dir="=${i}"></button>`))
+      }
+
+    glide.mount()
+
+    matchMedia('(max-width: 960px)', function(e) {
+      if (e.matches) {
+        glide.enable()
+      } else {
+        glide.mount()
+        glide.update({ startAt: 0 })
+        glide.disable()
+      }
+    })
+
+    if (matchMedia('(max-width: 960px)').matches) {
+      glide.enable()
+    } else {
+      glide.mount()
+      glide.update({ startAt: 0 })
+      glide.disable()
+    }
   },
   elements: {
     img: {
@@ -273,7 +301,7 @@
     </div>
   </section>
 
-  <div class="carousel-item template">
+  <div class="carousel-item glide__slide template">
     <div class="inner">
       <div class="image-wrap">
         <div class="image image-landing">
@@ -295,23 +323,45 @@
       item_template: '.carousel-item',
       item_anchor: '.slides-landing',
       callback: function(template) {
-        $('section.carousel').first().attr('id', 'main')
-        $(template).find('.slides').not('.slick-initialized').slick({
-          slidesToShow: 3,
-            slidesToScroll: 1,
-          dots: true,
-          arrows: false,
-          swipeToSlide: true,
-          responsive: [
-              {
-                breakpoint: 960,
-                settings: {
-                  slidesToShow: 1,
-                  slidesToScroll: 1
-                }
-              }
-          ]
-        });
+        document.querySelector('section.carousel').setAttribute('id', 'main')
+        var glide = new Glide(template, {
+          type: 'slider',
+          perView: 3,
+          bound: true,
+          breakpoints: {
+            960: {
+              perView: 1
+            }
+          }
+        })
+
+        var slides = template.querySelectorAll('.glide__slide')
+        var bullets = template.querySelector('.glide__bullets')
+
+        if (bullets)
+          for (var i = 0; i < slides.length; i++) {
+            bullets.appendChild(parseDOM(`<button class="slider__bullet glide__bullet" data-glide-dir="=${i}"></button>`))
+          }
+
+        glide.mount()
+
+        matchMedia('(max-width: 960px)', function(e) {
+          if (e.matches) {
+            glide.enable()
+          } else {
+            glide.mount()
+            glide.update({ startAt: 0 })
+            glide.disable()
+          }
+        })
+
+        if (matchMedia('(max-width: 960px)').matches) {
+          glide.enable()
+        } else {
+          glide.mount()
+          glide.update({ startAt: 0 })
+          glide.disable()
+        }
       },
       elements: {
         img: {
