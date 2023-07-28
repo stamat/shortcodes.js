@@ -2889,7 +2889,6 @@
     }
     const editorCaret2 = event.target.classList.contains("toggle-editor") ? event.target : event.target.closest(".toggle-editor");
     if (editorCaret2) {
-      console.log("toggle editor");
       event.preventDefault();
       toggleEditor();
       return;
