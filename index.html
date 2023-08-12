@@ -306,9 +306,8 @@
   callback: function(template) {
     document.querySelector('section.carousel').setAttribute('id', 'main')
     var glide = new Glide(template, {
-      type: 'slider',
+      type: 'carousel',
       perView: 3,
-      bound: true,
       breakpoints: {
         960: {
           perView: 1
@@ -325,24 +324,6 @@
       }
 
     glide.mount()
-
-    matchMedia('(max-width: 960px)', function(e) {
-      if (e.matches) {
-        glide.enable()
-      } else {
-        glide.mount()
-        glide.update({ startAt: 0 })
-        glide.disable()
-      }
-    })
-
-    if (matchMedia('(max-width: 960px)').matches) {
-      glide.enable()
-    } else {
-      glide.mount()
-      glide.update({ startAt: 0 })
-      glide.disable()
-    }
   },
   elements: {
     img: {
@@ -414,9 +395,8 @@ shortcodes.register('carousel', {
   callback: function(template) {
     document.querySelector('section.carousel').setAttribute('id', 'main')
     var glide = new Glide(template, {
-      type: 'slider',
+      type: 'carousel',
       perView: 3,
-      bound: true,
       breakpoints: {
         960: {
           perView: 1
@@ -433,24 +413,6 @@ shortcodes.register('carousel', {
       }
 
     glide.mount()
-
-    matchMedia('(max-width: 960px)', function(e) {
-      if (e.matches) {
-        glide.enable()
-      } else {
-        glide.mount()
-        glide.update({ startAt: 0 })
-        glide.disable()
-      }
-    })
-
-    if (matchMedia('(max-width: 960px)').matches) {
-      glide.enable()
-    } else {
-      glide.mount()
-      glide.update({ startAt: 0 })
-      glide.disable()
-    }
   },
   elements: {
     img: {

@@ -143,6 +143,12 @@
     }
     return true;
   }
+  function detachElement(element) {
+    if (element && element.parentNode) {
+      element.parentNode.removeChild(element);
+    }
+    return element;
+  }
 
   // src/lib/parsers.js
   function getShortcodeContent(str) {
@@ -155,7 +161,7 @@
     return re.test(str);
   }
   function getShortcodeName(str) {
-    const re = /^\s*([a-z_]{1}[a-z0-9\-_]*)\s*/i;
+    const re = /^\/?\s*([a-z_]{1}[a-z0-9\-_]*)\s*/i;
     const match = str.match(re);
     return match ? match[1] : null;
   }
@@ -244,7 +250,8 @@
       this.options = {
         template_class: "template",
         self_anchor_class: "self-anchor",
-        placement_class_prefix: "shortcode-landing"
+        placement_class_prefix: "shortcode-landing",
+        detachElements: false
       };
       if (options) {
         shallowMerge(this.options, options);
@@ -305,6 +312,8 @@
       const children = elem.children;
       let last_shortcode = null;
       let shortcode_counter = 0;
+      const scheduleForDetachment = [];
+      const scheduleForRemoval = [];
       for (let i2 = 0; i2 < children.length; i2++) {
         const child = children[i2];
         let match = null;
@@ -318,10 +327,13 @@
         if (match) {
           if (last_shortcode && isSpecificClosingTag(match, last_shortcode.name)) {
             last_shortcode = null;
-            child.remove();
+            scheduleForRemoval.push(child);
             continue;
           }
           last_shortcode = new Shortcode(match, clone(register[getShortcodeName(match)]), shortcode_counter);
+          if (last_shortcode.descriptor.detachElements === void 0 || last_shortcode.descriptor.detachElements === null) {
+            last_shortcode.descriptor.detachElements = this.options.detachElements;
+          }
           const self_anchor = this.createSelfAnchor(child, self_anchor_class, last_shortcode.name, shortcode_counter);
           if (!map.hasOwnProperty(last_shortcode.uid)) {
             map[last_shortcode.uid] = last_shortcode;
@@ -331,9 +343,17 @@
           child.remove();
           continue;
         }
-        if (last_shortcode.uid) {
+        if (last_shortcode && last_shortcode.uid) {
+          if (last_shortcode.descriptor.detachElements)
+            scheduleForDetachment.push(child);
           map[last_shortcode.uid].content.push(child);
         }
+      }
+      for (let i2 = 0; i2 < scheduleForDetachment.length; i2++) {
+        detachElement(scheduleForDetachment[i2]);
+      }
+      for (let i2 = 0; i2 < scheduleForRemoval.length; i2++) {
+        scheduleForRemoval[i2].remove();
       }
       return map;
     }
@@ -495,7 +515,9 @@
     } else {
       finalDestination = query(props.anchor, descriptor2.anchor);
     }
-    if (!finalDestination.length && dest.matches(props.anchor))
+    if (!finalDestination.length && matchesAll(dest, props.anchor))
+      finalDestination = dest;
+    if (!props.anchor)
       finalDestination = dest;
     if (finalDestination instanceof Element)
       finalDestination = [finalDestination];

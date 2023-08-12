@@ -353,7 +353,8 @@ Shortcodes.prototype.constructElements = function(item, dest, props, shortcode_o
 		finalDestination = query(props.anchor, descriptor.anchor)
 	}
 
-	if (!finalDestination.length && dest.matches(props.anchor)) finalDestination = dest
+	if (!finalDestination.length && matchesAll(dest, props.anchor)) finalDestination = dest
+	if (!props.anchor) finalDestination = dest
 	if (finalDestination instanceof Element) finalDestination = [finalDestination]
 
 	for (let i = 0; i < finalDestination.length; i++) {
