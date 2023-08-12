@@ -15,7 +15,7 @@ export class Shortcodes {
 			template_class: 'template',
 			self_anchor_class: 'self-anchor',
 			placement_class_prefix: 'shortcode-landing',
-			detachFoundElements: false,
+			detachElements: false,
 		}
 	
 		if (options) {
@@ -80,6 +80,7 @@ export class Shortcodes {
 		let last_shortcode = null
 		let shortcode_counter = 0
 		const scheduleForDetachment = []
+		const scheduleForRemoval = []
 
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i]
@@ -89,7 +90,6 @@ export class Shortcodes {
 			if (!(child instanceof HTMLPreElement || child.querySelector('pre'))) { //only if it's not "pre" element
 				const text = decodeHTML(child.textContent.trim())
 				match = getShortcodeContent(text)
-
 				// if the shortcode is not registered, treat it as a regular text
 				if (match && !register.hasOwnProperty(getShortcodeName(match))) {
 					match = null
@@ -101,11 +101,14 @@ export class Shortcodes {
 				// detect closing tag and remove it
 				if (last_shortcode && isSpecificClosingTag(match, last_shortcode.name)) {
 					last_shortcode = null
-					child.remove()
+					scheduleForRemoval.push(child)
 					continue
 				}
 
 				last_shortcode = new Shortcode(match, clone(register[getShortcodeName(match)]), shortcode_counter)
+				if (last_shortcode.descriptor.detachElements === undefined || last_shortcode.descriptor.detachElements === null) {
+					last_shortcode.descriptor.detachElements = this.options.detachElements
+				}
 				const self_anchor = this.createSelfAnchor(child, self_anchor_class, last_shortcode.name, shortcode_counter)
 
 				if (!map.hasOwnProperty(last_shortcode.uid)) {
@@ -117,19 +120,22 @@ export class Shortcodes {
 				child.remove()
 				continue
 			}
-
+			
 			if (last_shortcode && last_shortcode.uid) {
-				scheduleForDetachment.push(child)
+				if (last_shortcode.descriptor.detachElements) scheduleForDetachment.push(child)
 				map[last_shortcode.uid].content.push(child)
 			}
 
 			//TODO: Shortcode object, since it holds the descriptor, should be able to know if it gathered enough elements
 		}
+		
+		for (let i = 0; i < scheduleForDetachment.length; i++) {
+			detachElement(scheduleForDetachment[i])
+		}
 
-		if (this.options.detachFoundElements)
-			for (let i = 0; i < scheduleForDetachment.length; i++) {
-				detachElement(scheduleForDetachment[i])
-			}
+		for (let i = 0; i < scheduleForRemoval.length; i++) {
+			scheduleForRemoval[i].remove()
+		}
 
 		return map
 	}
