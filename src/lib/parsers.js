@@ -40,7 +40,7 @@ export function isSpecificClosingTag(str, tag) {
  * // => 'shortcode'
  */
 export function getShortcodeName(str) {
-	const re = /^\s*\/\s*([a-z_]{1}[a-z0-9\-_]*)\s*/i
+	const re = /^\/?\s*([a-z_]{1}[a-z0-9\-_]*)\s*/i
 	const match = str.match(re)
 	return match ? match[1] : null
 }
