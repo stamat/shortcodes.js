@@ -1,6 +1,7 @@
 import { clone, shallowMerge, remove, insertBeforeElement, propertyIsFunction, css, isEmptyElement, decodeHTML, query, isFunction, hasOwnProperties, isObject, propertyIsString, isArray, transformDashToCamelCase, matchesAll, isString } from 'book-of-spells'
 import { getShortcodeContent, isSpecificClosingTag, getShortcodeName } from './lib/parsers'
 import { Shortcode } from './lib/Shortcode'
+import { detachElement } from 'book-of-spells/src/dom.mjs'
 
 export class Shortcodes {
 	constructor(options) {
@@ -13,7 +14,8 @@ export class Shortcodes {
 		this.options = {
 			template_class: 'template',
 			self_anchor_class: 'self-anchor',
-			placement_class_prefix: 'shortcode-landing'
+			placement_class_prefix: 'shortcode-landing',
+			detachFoundElements: false,
 		}
 	
 		if (options) {
@@ -77,6 +79,7 @@ export class Shortcodes {
 		const children = elem.children
 		let last_shortcode = null
 		let shortcode_counter = 0
+		const scheduleForDetachment = []
 
 		for (let i = 0; i < children.length; i++) {
 			const child = children[i]
@@ -115,12 +118,18 @@ export class Shortcodes {
 				continue
 			}
 
-			if (last_shortcode.uid) {
+			if (last_shortcode && last_shortcode.uid) {
+				scheduleForDetachment.push(child)
 				map[last_shortcode.uid].content.push(child)
 			}
 
 			//TODO: Shortcode object, since it holds the descriptor, should be able to know if it gathered enough elements
 		}
+
+		if (this.options.detachFoundElements)
+			for (let i = 0; i < scheduleForDetachment.length; i++) {
+				detachElement(scheduleForDetachment[i])
+			}
 
 		return map
 	}
