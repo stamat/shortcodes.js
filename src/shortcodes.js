@@ -115,7 +115,7 @@ export class Shortcodes {
 				continue
 			}
 
-			if (last_shortcode.uid) {
+			if (last_shortcode && last_shortcode.uid) {
 				map[last_shortcode.uid].content.push(child)
 			}
 
