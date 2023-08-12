@@ -118,6 +118,8 @@ export class Shortcodes {
 			if (last_shortcode.uid) {
 				map[last_shortcode.uid].content.push(child)
 			}
+
+			//TODO: Shortcode object, since it holds the descriptor, should be able to know if it gathered enough elements
 		}
 
 		return map
