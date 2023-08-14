@@ -444,7 +444,8 @@ Shortcodes.prototype.register = function(shortcode_name, descriptor) {
 		const template = self.construct(shortcode_obj)
 
 		if (template) {
-			if (shortcode_obj.classes.length) template.classList.add(shortcode_obj.classes.join(' '))
+			console.log(shortcode_obj.classes)
+			if (shortcode_obj.classes.length) template.classList.add(...shortcode_obj.classes)
 			css(template, shortcode_obj.css)
 			template.classList.add('shortcode-js')
 		}
