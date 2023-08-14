@@ -1,4 +1,4 @@
-import { clone, shallowMerge, propertyIsFunction, parseAttributes, isEmpty } from 'book-of-spells';
+import { clone, shallowMerge, propertyIsFunction, parseAttributes, isEmpty, isObject } from 'book-of-spells';
 import { getShortcodeName } from './parsers';
 
 export class Shortcode {
@@ -57,7 +57,7 @@ export class Shortcode {
 		if (this.elements.hasOwnProperty(element_name)) return this.elements[element_name]
 
 		for (const k in this.elements) {
-			if(new RegExp(k, 'i').test(element_name))
+			if(new RegExp(element_name, 'i').test(k))
 				return this.elements[k]
 		}
 
@@ -91,6 +91,7 @@ export class Shortcode {
 	}
 
 	addContent(content) {
+		//TODO: FOLLOW THIS PATH 👇 TO DISMANTLE sortDOM god function ❗️❗️❗️
 		const elementObject = this.canAddContent(content)
 		if (!elementObject) return false
 		this.content.push(content)
@@ -171,7 +172,7 @@ export class Shortcode {
 		return this
 	}
 
-	elementExtract = function(element, properties) {
+	elementExtract(element, properties) {
 		if (typeof element === 'string') element = querySingle(element)
 	
 		if (typeof properties === 'string') properties = [properties]
