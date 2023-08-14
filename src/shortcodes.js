@@ -126,7 +126,6 @@ export class Shortcodes {
 			
 			if (last_shortcode && last_shortcode.uid) {
 				const addResult = map[last_shortcode.uid].addContent(child)
-				console.log(addResult)
 				if (last_shortcode.descriptor.detachElements && addResult) scheduleForDetachment.push(child)
 			}
 
