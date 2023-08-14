@@ -105,6 +105,8 @@ export class Shortcodes {
 					continue
 				}
 
+				// TODO: we can check for a subtag here?
+
 				last_shortcode = new Shortcode(match, clone(register[getShortcodeName(match)]), shortcode_counter)
 				if (last_shortcode.descriptor.detachElements === undefined || last_shortcode.descriptor.detachElements === null) {
 					last_shortcode.descriptor.detachElements = this.options.detachElements
@@ -117,13 +119,15 @@ export class Shortcodes {
 				}
 
 				map[last_shortcode.uid].content.push(self_anchor)
-				child.remove()
+				map[last_shortcode.uid].self_anchor = self_anchor
+				child.remove() // safe to remove, since we have a self anchor that replaces the tag element, so the loop is not broken
 				continue
 			}
 			
 			if (last_shortcode && last_shortcode.uid) {
-				if (last_shortcode.descriptor.detachElements) scheduleForDetachment.push(child)
-				map[last_shortcode.uid].content.push(child)
+				const addResult = map[last_shortcode.uid].addContent(child)
+				console.log(addResult)
+				if (last_shortcode.descriptor.detachElements && addResult) scheduleForDetachment.push(child)
 			}
 
 			//TODO: Shortcode object, since it holds the descriptor, should be able to know if it gathered enough elements
@@ -327,7 +331,7 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 Shortcodes.prototype.constructElements = function(item, dest, props, shortcode_obj, num) {
 	const descriptor = shortcode_obj.descriptor
 	// Extract DOM attributes
-	const extracted = props.extract ? this.extract(item, props.extract) : null
+	const extracted = props.extract ? shortcode_obj.elementExtract(item, props.extract) : null
 
 	if (!extracted) return
 
@@ -604,64 +608,6 @@ Shortcodes.prototype.bindShortcode = function(source, destination, function_name
 			}
 		}
 	}
-}
-
-Shortcodes.prototype.extract = function(element, properties) {
-	if (typeof element === 'string') element = querySingle(element)
-
-	if (typeof properties === 'string') properties = [properties]
-
-	const fns = {}
-	const result = {}
-
-	fns['html'] = function(element, property) {
-		result.html = element.innerHTML
-	}
-
-	fns['text'] = function(element, property) {
-		result.text = element.textContent
-	}
-
-	fns['self'] = function(element, property) {
-		result.self = element
-	}
-
-	fns['style'] = function(element, property) {
-		if (!hasOwnProperties(properties[i], ['name', 'properties'])) return
-		if (!property.name === 'style') return
-		if (!isArray(property.properties)) property.properties = [property.properties]
-
-		result.style = {}
-
-		for (let i = 0; i < property.properties.length; i++) {
-			const camelCaseProp = transformDashToCamelCase(property.properties[i])
-			result.style[property.properties[i]] = element.style[camelCaseProp]
-		}
-	}
-
-	fns['function'] = function(element, property) {
-		if (!hasOwnProperties(property, ['name', 'extract_fn'])) return
-		if (!isFunction(property.extract_fn)) return
-		result[property.name] = property.extract_fn(element)
-	}
-
-	for (let i = 0; i < properties.length; i++) {
-
-		if (fns.hasOwnProperty(properties[i])) {
-			fns[properties[i]](element, properties[i])
-			continue
-		}
-
-		if (isObject(properties[i])) {
-			fns['function'](element, properties[i])
-			fns['style'](element, properties[i])
-			continue
-		}
-
-		result[properties[i]] = element.getAttribute(properties[i])
-	}
-
-	return result
 }
 
 export default Shortcodes
