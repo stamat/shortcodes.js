@@ -8,8 +8,8 @@ export class Shortcodes {
 		this.descriptor_index = {}
 		this.exec_fns = {}
 	
-		this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)$/gi
-		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)$/gi
+		this.shopify_img_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(_[0-9]+x[0-9]*)(\.[a-z]{3,4}.*)/gi
+		this.shopify_img_replacer_re = /^([a-z\.:\/]+\.shopify\.[a-z0-9\/_\-]+)(\.[a-z]{3,4}.*)/gi
 		
 		this.options = {
 			template_class: 'template',
@@ -34,15 +34,17 @@ export class Shortcodes {
 		const pref = '$1'
 		let suf = '$2'
 		if (!width) width = 100
+		this.shopify_img_replacer_re.lastIndex = 0
 		let re = this.shopify_img_replacer_re
 
 		if (!re.test(src)) return src
 
 		if (this.shopify_img_re.test(src)) {
 			suf = '$3'
+			this.shopify_img_re.lastIndex = 0
 			re = this.shopify_img_re
 		}
-
+		
 		const replacement = `${pref}_${width}x${suf}`
 		return src.replace(re, replacement)
 	}
@@ -125,7 +127,17 @@ export class Shortcodes {
 			}
 			
 			if (last_shortcode && last_shortcode.uid) {
-				const addResult = map[last_shortcode.uid].addContent(child)
+				let addResult = false
+
+				// if the image is in the paragraph, we need to extract it... maybe? this is a hotfix! think about this!
+				if (child.matches('p') && child.children.length && child.children.length === child.querySelectorAll('img').length) {
+					child.querySelectorAll('img').forEach(img => {
+						map[last_shortcode.uid].addContent(img)
+					})
+					addResult = true
+				} else {
+					addResult = map[last_shortcode.uid].addContent(child)
+				}
 				if (last_shortcode.descriptor.detachElements && addResult) scheduleForDetachment.push(child)
 			}
 
