@@ -129,7 +129,7 @@ export class Shortcodes {
 				let addResult = false
 
 				// if the image is in the paragraph, we need to extract it... maybe? this is a hotfix! think about this!
-				if (child.matches('p') && child.children.length && child.children.length === child.querySelectorAll('img').length) {
+				if (child.matches('p, div') && child.children.length && child.children.length === child.querySelectorAll('img').length) {
 					child.querySelectorAll('img').forEach(img => {
 						map[last_shortcode.uid].addContent(img)
 					})
