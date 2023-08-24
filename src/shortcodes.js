@@ -120,7 +120,6 @@ export class Shortcodes {
 					shortcode_counter++
 				}
 
-				map[last_shortcode.uid].content.push(self_anchor)
 				map[last_shortcode.uid].self_anchor = self_anchor
 				child.remove() // safe to remove, since we have a self anchor that replaces the tag element, so the loop is not broken
 				continue
@@ -228,14 +227,8 @@ Shortcodes.prototype.sortDOM = function(shortcode_obj) {
 	for (let i = 0; i < content.length; i++) {
 		let item = content[i]
 
-		//❗️TODO: THIS CAN BE DONE IN THE SHORTCODE CLASS DURING CONSTRUCTION
-		if (item.classList.contains(this.options.self_anchor_class)) {
-			if (descriptor.anchor === 'self') descriptor.anchor = item
-			continue
-		}
-
 		//if the contents are empty, with exclusion of images
-		if (!item.matches('img') && isEmptyElement(item)) continue
+		if (!item.matches('img') && !item.matches('hr') && isEmptyElement(item)) continue
 
 		let green_flag = false // ⬇🇸🇦 if true, the iteration is over? (copilot said this not me) 
 
@@ -385,6 +378,10 @@ Shortcodes.prototype.construct = function(shortcode_obj) {
 	}
 	
 	const sorted = this.sortDOM(shortcode_obj)
+
+	if (shortcode_obj.descriptor.hasOwnProperty('anchor') && shortcode_obj.descriptor.anchor === 'self') {
+		shortcode_obj.descriptor.anchor = shortcode_obj.self_anchor
+	}
 
 	if (shortcode_obj.descriptor.hasOwnProperty('item_template')) {
 		for (let i = 0; i < sorted.elements[sorted.max_element_key].length; i++) {
